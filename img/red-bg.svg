@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<svg width="400" height="400">
+  <rect x="50" y="20" width="400" height="400"
+  style="fill:blue;stroke:pink;stroke-width:5;opacity:0.5" />
+
+  <script>
+      <![CDATA[
+        //var params = document.defaultView.location.href.split("?")[1].split("&");
+
+          var params = { color: red };
+          /*location.href.split( '?' )[1].split( '&' ).forEach(
+              function( i )
+              {
+                  params[ i.split( '=' )[0] ] = i.split( '=' )[1];
+              }
+          );/*
+
+          if( params.color )
+          {
+              var rect = document.getElementsByTagName( "rect" )[0];
+              rect.setAttribute( "fill", params.color );
+          }
+      ]]>
+      </script>
+</svg>

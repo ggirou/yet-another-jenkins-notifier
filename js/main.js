@@ -16,7 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 angular.module('jenkins.notifier', [])
-	.controller('JobListController', function ($scope, $window, Runtime, Jobs, buildNotifier) {
+	.controller('JobListController', function ($scope, $window, Runtime, Jobs, buildNotifier, Notification) {
+
+		Notification.create(null, {
+				type: "basic",
+				title: "Toto",
+				message: "Message",
+				iconUrl: "img/logo-failure.svg"
+			}
+		);
+
 		$scope.$on('jobsInitialized', function () {
 			Jobs.updateAllStatus().then(buildNotifier);
 		});
@@ -183,7 +192,7 @@ angular.module('jenkins.notifier', [])
 							type: "basic",
 							title: title + " - " + newValue.name,
 							message: decodeURI(newValue.lastBuild.url),
-							iconUrl: "img/logo.svg"
+							iconUrl: "img/logo.svg?background-color=red"
 						},
 						{
 							onClicked: function () {
