@@ -1,0 +1,32 @@
+<!doctype html>
+<html ng-app="jenkins.notifier">
+<head>
+    <title>Jenkins Notifier</title>
+
+    <!-- For dev only -->
+    <script src="stub.js"></script>
+
+    <script src="js/angular.min.js"></script>
+    <script src="js/main.js"></script>
+
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/custom.css" rel="stylesheet">
+</head>
+<body ng-controller="JobListController">
+<section>
+    <form class="form-inline" ng-submit="submit()">
+        <div class="form-group">
+            <label for="url">Url</label>
+            <input type="text" class="form-control" id="url" ng-model="url" placeholder="http://jenkins/job/your_job/">
+        </div>
+        <button type="submit" class="btn btn-primary" aria-label="Add">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+        </button>
+    </form>
+</section>
+<section>
+    <!-- TODO: job list -->
+</section>
+</body>
+</html>
+
