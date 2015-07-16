@@ -12,19 +12,24 @@
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/custom.css" rel="stylesheet">
 </head>
-<body ng-controller="JobListController">
-<section>
+<body class="container-fluid" ng-controller="JobListController">
+<section class="col-xs-12">
+    <h2>Jenkins Notifier</h2>
     <form class="form-inline" ng-submit="submit()">
-        <div class="form-group">
-            <label for="url">Url</label>
-            <input type="text" class="form-control" id="url" ng-model="url" placeholder="http://jenkins/job/your_job/">
+        <div class="input-group">
+            <label class="input-group-addon" for="url">Url</label>
+            <input type="text" class="form-control" id="url" ng-model="url"
+                   placeholder="http://jenkins/job/your_job/">
+            <span class="input-group-btn">
+                <button type="submit" class="btn btn-primary" aria-label="Add">
+                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                </button>
+            </span>
         </div>
-        <button type="submit" class="btn btn-primary" aria-label="Add">
-            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-        </button>
     </form>
 </section>
-<section>
+<section class="col-xs-12">
+    <h3>Jobs</h3>
     <!-- TODO: job list -->
 </section>
 </body>
