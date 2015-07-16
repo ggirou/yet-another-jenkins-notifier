@@ -1,5 +1,23 @@
 body, section {
     width: 500px;
-    height: 400px;
+    min-height: 200px;
     overflow-x: hidden;
+}
+
+.avatar {
+    border-width: 0 0 0 5px;
+    border-style: solid;
+    vertical-align: bottom;
+}
+
+.inline-block {
+    display: inline-block;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.no-margin {
+    margin: 0;
 }

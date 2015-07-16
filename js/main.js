@@ -87,7 +87,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 angular.module('jenkins.notifier', [])
-	.controller('JobListController', function ($scope, Jobs, Notification) {
+	.controller('JobListController', function ($scope, $window, Jobs, Notification) {
+		$scope.open = function (url) {
+			$window.open(url);
+		};
+
+		Jobs.list().then(function(jobs){
+			$scope.jobs = jobs;
+		});
+
 		Notification.create(null, {
 				type: "basic",
 				title: "Build Failed! - PSO03_nodeBIA",
@@ -176,7 +184,7 @@ angular.module('jenkins.notifier', [])
 			if (angular.isFunction(listener.onClosed)) {
 				listener.onClosed();
 			}
-			//delete Listeners[notificationId];
+			delete Listeners[notificationId];
 		});
 
 		return {

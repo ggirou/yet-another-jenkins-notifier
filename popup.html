@@ -31,6 +31,21 @@
 <section class="col-xs-12">
     <h3>Jobs</h3>
     <!-- TODO: job list -->
+    <div class="list-group">
+        <button class="list-group-item" ng-click="open('http://gregerger')">
+            <img class="img-rounded avatar" alt="Jenkins" src="img/icon48.png"
+                 ng-class="{'alert-success': true, 'alert-warning': false, 'alert-danger': false, 'alert-info': false}">
+            <h4 class="no-margin inline-block">
+                <span>GREGERG</span>
+                <br>
+                <a class="small" href="http://gregerger" target="_blank">http://gregerger</a>
+            </h4>
+            <span class="badge pull-right alert-success" ng-if="true">Succeed</span>
+            <span class="badge pull-right alert-warning" ng-if="false">Unstable</span>
+            <span class="badge pull-right alert-danger" ng-if="false">Failed</span>
+            <span class="badge pull-right alert-info" ng-if="false">Building</span>
+        </button>
+    </div>
 </section>
 </body>
 </html>
