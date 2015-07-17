@@ -1,97 +1,10 @@
-function nop() {
-}
-
-function httpGet(url) {
-	var callbacks = {
-		success: nop,
-		failure: nop
-	};
-	var req = new XMLHttpRequest();
-	req.open('GET', url, true);
-	req.onreadystatechange = function () {
-		if (req.readyState == 4) {
-			if (req.status == 200)
-				callbacks.success(req.responseText);
-			else
-				callbacks.failure("Jenkins url unreachable!");
-		}
-	};
-	req.send(null);
-	return callbacks;
-}
-
-function notify() {
-	chrome.notifications.create(null, {
-		type: "basic",
-		title: "Build Failed! - PSO03_nodeBIA",
-		message: "http://ottawa.swisslife.lan:8080/job/PSO03_nodeBIA/",
-		iconUrl: "img/logo.svg"
-	}, function (notificationId) {
-		chrome.notifications.onClicked.addListener(function (clickedNotificationId) {
-			if (notificationId === clickedNotificationId) {
-				window.open("http://ottawa.swisslife.lan:8080/job/PSO03_nodeBIA/");
-			}
-		});
-	});
-}
-/*
- function submit() {
- var url = document.querySelector("#url").value;
- storage.addUrl(url);
- return false;
- }*/
-
-document.addEventListener('DOMContentLoaded', function () {
-	/*	document.querySelector("#url").value = "gfezgrez";
-	 submit();
-
-	 //http://ottawa.swisslife.lan:8080/job/PSO03_nodeBIA/lastBuild/api/json
-	 storage.getAllUrls(function (urls) {
-	 console.log(urls);
-	 });
-	 storage.addUrl("http://ottawa.swisslife.lan:8080/job/PSO03_nodeBIA/", function () {
-	 storage.getAllUrls(function (urls) {
-	 console.log(urls);
-	 });
-	 });
-	 notify();
-
-	 var res = httpGet('http://ottawa.swisslife.lan:8080/job/PSO03_nodeBIA/lastBuild/api/json');
-	 res.success = function (data) {
-	 console.log(JSON.parse(data));
-	 };*/
-
-	/*getCurrentTabUrl(function(url) {
-	 // Put the image URL in Google search.
-	 renderStatus('Performing Google Image search for ' + url);
-
-	 getImageUrl(url, function(imageUrl, width, height) {
-
-	 renderStatus('Search term: ' + url + '\n' +
-	 'Google image search result: ' + imageUrl);
-	 var imageResult = document.getElementById('image-result');
-	 // Explicitly set the width/height to minimize the number of reflows. For
-	 // a single image, this does not matter, but if you're going to embed
-	 // multiple external images in your page, then the absence of width/height
-	 // attributes causes the popup to resize multiple times.
-	 imageResult.width = width;
-	 imageResult.height = height;
-	 imageResult.src = imageUrl;
-	 imageResult.hidden = false;
-
-	 }, function(errorMessage) {
-	 renderStatus('Cannot display image. ' + errorMessage);
-	 });
-	 });*/
-});
-
-
 angular.module('jenkins.notifier', [])
 	.controller('JobListController', function ($scope, $window, Jobs, Notification) {
 		$scope.open = function (url) {
 			$window.open(url);
 		};
 
+		// http://localhost:8080/job/my_job/lastBuild/api/json
 		// SUCCESS, UNSTABLE, FAILURE
 		// blue, yellow, red, notbuilt, disabled
 		// blue_anime, ...
@@ -102,13 +15,13 @@ angular.module('jenkins.notifier', [])
 
 		Notification.create(null, {
 				type: "basic",
-				title: "Build Failed! - PSO03_nodeBIA",
-				message: "http://ottawa.swisslife.lan:8080/job/PSO03_nodeBIA/",
+				title: "Build Failed! - my_job",
+				message: "http://localhost:8080/job/my_job/",
 				iconUrl: "img/logo.svg"
 			},
 			{
 				onClicked: function () {
-					window.open("http://ottawa.swisslife.lan:8080/job/PSO03_nodeBIA/");
+					window.open("http://localhost:8080/job/my_job/");
 				}
 			}
 		);

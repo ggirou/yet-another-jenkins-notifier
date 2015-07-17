@@ -13,7 +13,10 @@ chrome.notifications = chrome.notifications || {
 			if (Notification.permission !== "granted")
 				Notification.requestPermission();
 
-			new Notification(options.title, options);
+			new Notification(options.title, {
+				icon: "img/icon48.png",
+				body: options.message
+			});
 
 			callback(notificationId || new Date().getTime());
 		}
