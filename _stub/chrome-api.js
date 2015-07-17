@@ -21,10 +21,10 @@ chrome.notifications = chrome.notifications || {
 chrome.storage = chrome.storage || {};
 chrome.storage.local = chrome.storage.local || {
 		get: function (keys, callback) {
-			callback(localStorage.getItem("storage"));
+			callback(JSON.parse(localStorage.getItem("storage")) || {});
 		},
 		set: function (objects, callback) {
-			localStorage.setItem("storage", objects);
+			localStorage.setItem("storage", JSON.stringify(objects));
 			callback();
 		}
 	};

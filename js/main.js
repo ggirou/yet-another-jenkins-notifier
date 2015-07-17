@@ -92,7 +92,11 @@ angular.module('jenkins.notifier', [])
 			$window.open(url);
 		};
 
-		Jobs.list().then(function(jobs){
+		// SUCCESS, UNSTABLE, FAILURE
+		// blue, yellow, red, notbuilt, disabled
+		// blue_anime, ...
+
+		Jobs.list().then(function (jobs) {
 			$scope.jobs = jobs;
 		});
 
@@ -118,8 +122,7 @@ angular.module('jenkins.notifier', [])
 			});
 		}
 	})
-	.
-	service('Jobs', function (Storage) {
+	.service('Jobs', function (Storage) {
 		return {
 			list: function () {
 				return Storage.get("urls").then(function (objects) {
@@ -129,7 +132,7 @@ angular.module('jenkins.notifier', [])
 			add: function (url) {
 				return Storage.get("urls").then(function (objects) {
 					objects.urls = objects.urls || {};
-					objects.urls[url] = null;
+					objects.urls[url] = {};
 					return Storage.set(objects);
 				});
 			},

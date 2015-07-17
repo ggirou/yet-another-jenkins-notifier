@@ -1,0 +1,57 @@
+{
+  "assignedLabels": [
+    {}
+  ],
+  "mode": "NORMAL",
+  "nodeDescription": "the master Jenkins node",
+  "nodeName": "",
+  "numExecutors": 2,
+  "description": null,
+  "jobs": [
+    {
+      "name": "my_job",
+      "url": "http://localhost:8080/job/my_job/",
+      "color": "blue"
+    },
+    {
+      "name": "new_job",
+      "url": "http://localhost:8080/job/new_job/",
+      "color": "notbuilt"
+    },
+    {
+      "name": "unstable_job",
+      "url": "http://localhost:8080/job/unstable_job/",
+      "color": "yellow"
+    },
+    {
+      "name": "failing_job",
+      "url": "http://localhost:8080/job/failing_job/",
+      "color": "red"
+    },
+    {
+      "name": "disabled_job",
+      "url": "http://localhost:8080/job/disabled_job/",
+      "color": "disabled"
+    }
+  ],
+  "overallLoad": {},
+  "primaryView": {
+    "name": "All",
+    "url": "http://localhost:8080/"
+  },
+  "quietingDown": false,
+  "slaveAgentPort": 0,
+  "unlabeledLoad": {},
+  "useCrumbs": false,
+  "useSecurity": true,
+  "views": [
+    {
+      "name": "My View",
+      "url": "http://localhost:8080/view/my_view/"
+    },
+    {
+      "name": "All",
+      "url": "http://localhost:8080/view/All/"
+    }
+  ]
+}
