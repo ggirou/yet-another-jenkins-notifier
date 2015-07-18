@@ -21,3 +21,10 @@ body, section {
 .no-margin {
     margin: 0;
 }
+
+.job-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 66%;
+}

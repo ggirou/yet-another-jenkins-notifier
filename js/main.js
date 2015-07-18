@@ -4,59 +4,101 @@ angular.module('jenkins.notifier', [])
 			$window.open(url);
 		};
 
-		// http://localhost:8080/job/my_job/lastBuild/api/json
-		// SUCCESS, UNSTABLE, FAILURE
-		// blue, yellow, red, notbuilt, disabled
-		// blue_anime, ...
+		$scope.Jobs = Jobs;
 
-		Jobs.list().then(function (jobs) {
-			$scope.jobs = jobs;
-		});
+		Jobs.updateAllStatus();
 
-		Notification.create(null, {
-				type: "basic",
-				title: "Build Failed! - my_job",
-				message: "http://localhost:8080/job/my_job/",
-				iconUrl: "img/logo.svg"
-			},
-			{
-				onClicked: function () {
-					window.open("http://localhost:8080/job/my_job/");
-				}
-			}
-		);
-
-		$scope.submit = function () {
-			Jobs.add($scope.url).then(function () {
+		$scope.add = function (url) {
+			Jobs.add(url).then(function () {
 				$scope.url = "";
-				Jobs.list().then(function (urls) {
-					console.log(urls);
-				});
 			});
-		}
+		};
 	})
-	.service('Jobs', function (Storage) {
-		return {
-			list: function () {
-				return Storage.get("urls").then(function (objects) {
-					return Object.keys(objects.urls || {});
-				});
-			},
+	.service('Jobs', function (Storage, jenkins) {
+		var key = {urls: {}};
+		var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
+
+		var Jobs = {
+			list: {},
 			add: function (url) {
-				return Storage.get("urls").then(function (objects) {
-					objects.urls = objects.urls || {};
-					objects.urls[url] = {};
-					return Storage.set(objects);
+				return Storage.get(key).then(function (objects) {
+					var name = url.replace(jobNameRegExp, "$1");
+					objects.urls[url] = objects.urls[url] || {
+							name: name,
+							displayName: name
+						};
+					return Storage.set(objects)
+				}).then(function () {
+					return Jobs.updateStatus(url);
 				});
 			},
 			remove: function (url) {
-				return Storage.get("urls").then(function (objects) {
-					objects.urls = objects.urls || {};
+				return Storage.get(key).then(function (objects) {
 					delete objects.urls[url];
 					return Storage.set(objects);
 				});
+			},
+			update: function (url, data) {
+				var oldValue;
+				return Storage.get(key).then(function (objects) {
+					oldValue = objects.urls[url];
+					objects.urls[url] = data;
+					return Storage.set(objects);
+				}).then(function () {
+					return {oldValue: oldValue, newValue: data};
+				});
+			},
+			updateStatus: function (url) {
+				return jenkins(url).then(function (data) {
+					return Jobs.update(url, data);
+				});
+			},
+			updateAllStatus: function () {
+				return Storage.get(key).then(function (objects) {
+					var promises = [];
+					angular.forEach(objects.urls, function (_, url) {
+						promises.push(Jobs.updateStatus(url));
+					});
+					return promises;
+				});
 			}
 		};
+
+		Storage.get(key).then(function (objects) {
+			Jobs.list = objects.urls;
+		});
+		Storage.onChanged.addListener(function (objects) {
+			if (objects.urls) {
+				Jobs.list = objects.urls.newValue;
+			}
+		});
+
+		return Jobs;
+	})
+	.service('jenkins', function ($http) {
+		var colorToClass = {
+			blue: 'success', yellow: 'warning', red: 'danger'
+		};
+		var status = {
+			blue: 'Success', yellow: 'Unstable', red: 'Failure', notbuilt: 'Not built', disabled: 'Disabled'
+		};
+
+		return function (url) {
+			var url = url.charAt(url.length - 1) === '/' ? url : url + '/';
+			return $http.get(url + 'api/json/').then(function (res) {
+				var data = res.data;
+				var basicColor = (data.color || "").replace(/_anime$/, '');
+				return {
+					name: data.name,
+					displayName: data.displayName,
+					buildable: data.buildable,
+					building: /_anime$/.test(data.color),
+					status: status[basicColor] || basicColor,
+					statusClass: colorToClass[basicColor],
+					lastBuild: data.lastBuild || {}
+				};
+			});
+		}
 	})
 	.service('Storage', function ($q) {
 		var storage = chrome.storage.local;
@@ -72,6 +114,7 @@ angular.module('jenkins.notifier', [])
 		}
 
 		return {
+			onChanged: chrome.storage.onChanged,
 			get: function (keys) {
 				var deferred = $q.defer();
 				storage.get(keys, promisedCallback(deferred));
