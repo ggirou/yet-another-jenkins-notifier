@@ -1,77 +1,82 @@
 angular.module('jenkins.notifier', [])
-	.controller('JobListController', function ($scope, $window, Jobs, Notification) {
-		$scope.open = function (url) {
-			$window.open(url);
-		};
-
-		$scope.Jobs = Jobs;
+	.controller('JobListController', function ($scope, $window, Jobs) {
+		$scope.jobs = Jobs.list;
 
 		Jobs.updateAllStatus();
 
 		$scope.add = function (url) {
 			Jobs.add(url).then(function () {
 				$scope.url = "";
+			}).then(function () {
+				return Jobs.updateStatus(url);
 			});
 		};
+
+		$scope.remove = Jobs.remove;
+
+		$scope.open = function (url) {
+			$window.open(url);
+		};
 	})
-	.service('Jobs', function (Storage, jenkins) {
+	.service('Jobs', function ($rootScope, Storage, jenkins) {
 		var key = {urls: {}};
 		var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
 
+		var initialize = Storage.get(key);
+
+		initialize.then(function (objects) {
+			angular.copy(objects.urls, Jobs.list);
+		});
+
+		Storage.onChanged.addListener(function (objects) {
+			if (objects.urls) {
+				$rootScope.$apply(function () {
+					angular.copy(objects.urls.newValue, Jobs.list);
+				});
+			}
+		});
+
+		function defaultData(url) {
+			var name = url.replace(jobNameRegExp, "$1");
+			return {
+				name: name,
+				displayName: name
+			};
+		}
+
 		var Jobs = {
 			list: {},
-			add: function (url) {
-				return Storage.get(key).then(function (objects) {
-					var name = url.replace(jobNameRegExp, "$1");
-					objects.urls[url] = objects.urls[url] || {
-							name: name,
-							displayName: name
-						};
-					return Storage.set(objects)
+			add: function (url, data) {
+				var oldValue, newValue;
+				return initialize.then(function () {
+					oldValue = Jobs.list[url];
+					newValue = Jobs.list[url] = data || Jobs.list[url] || defaultData(url);
+					return Storage.set({urls: Jobs.list});
 				}).then(function () {
-					return Jobs.updateStatus(url);
+					return {oldValue: oldValue, newValue: newValue};
 				});
 			},
 			remove: function (url) {
-				return Storage.get(key).then(function (objects) {
-					delete objects.urls[url];
-					return Storage.set(objects);
-				});
-			},
-			update: function (url, data) {
-				var oldValue;
-				return Storage.get(key).then(function (objects) {
-					oldValue = objects.urls[url];
-					objects.urls[url] = data;
-					return Storage.set(objects);
-				}).then(function () {
-					return {oldValue: oldValue, newValue: data};
+				return initialize.then(function () {
+					delete Jobs.list[url];
+					return Storage.set({urls: Jobs.list});
 				});
 			},
 			updateStatus: function (url) {
 				return jenkins(url).then(function (data) {
-					return Jobs.update(url, data);
+					return Jobs.add(url, data);
 				});
 			},
 			updateAllStatus: function () {
-				return Storage.get(key).then(function (objects) {
+				return initialize.then(function () {
 					var promises = [];
-					angular.forEach(objects.urls, function (_, url) {
+					angular.forEach(Jobs.list, function (_, url) {
 						promises.push(Jobs.updateStatus(url));
 					});
 					return promises;
 				});
 			}
 		};
-
-		Storage.get(key).then(function (objects) {
-			Jobs.list = objects.urls;
-		});
-		Storage.onChanged.addListener(function (objects) {
-			if (objects.urls) {
-				Jobs.list = objects.urls.newValue;
-			}
-		});
 
 		return Jobs;
 	})
@@ -95,7 +100,7 @@ angular.module('jenkins.notifier', [])
 					building: /_anime$/.test(data.color),
 					status: status[basicColor] || basicColor,
 					statusClass: colorToClass[basicColor],
-					lastBuild: data.lastBuild || {}
+					lastBuild: data.lastCompletedBuild || {}
 				};
 			});
 		}

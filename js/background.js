@@ -13,8 +13,6 @@ angular.module('jenkins.notifier').run(function ($q, Jobs, Notification) {
 							return;
 						}
 
-						console.log(oldValue, newValue);
-
 						Notification.create(null, {
 								type: "basic",
 								title: "Build " + newValue.status + "! - " + newValue.displayName,
