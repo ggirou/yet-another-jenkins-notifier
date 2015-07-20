@@ -21,7 +21,7 @@
             <div class="input-group">
                 <label class="input-group-addon" for="url">Url</label>
                 <input type="url" class="form-control" id="url" name="url" ng-model="url"
-                       placeholder="http://jenkins/job/your_job/" required>
+                       autofocus placeholder="http://jenkins/job/your_job/" required>
                 <span class="input-group-btn">
                     <button type="submit" class="btn btn-primary" ng-disabled="urlForm.$invalid">
                         <span class="glyphicon glyphicon-plus"></span>
@@ -44,10 +44,10 @@
             </div>
             <img class="img-rounded avatar alert-{{job.statusClass}}" alt="Jenkins" src="img/icon48.png">
             <h4 class="job-title no-margin inline-block">
-                <span ng-bind="job.displayName"></span>
+                <span ng-bind="job.name"></span>
                 <br>
-                <a class="small" ng-href="{{url}}" ng-click="$event.stopPropagation()" target="_blank"
-                   ng-bind="url"></a>
+                <a class="small" ng-href="{{job.url}}" ng-click="$event.stopPropagation()" target="_blank"
+                   ng-bind="decodeURI(job.url)"></a>
             </h4>
         </button>
     </div>

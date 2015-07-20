@@ -15,8 +15,8 @@ angular.module('jenkins.notifier').run(function ($q, Jobs, Notification) {
 
 						Notification.create(null, {
 								type: "basic",
-								title: "Build " + newValue.status + "! - " + newValue.displayName,
-								message: newValue.lastBuild.url,
+								title: "Build " + newValue.status + "! - " + newValue.name,
+								message: decodeURI(newValue.lastBuild.url),
 								iconUrl: "img/logo.svg"
 							},
 							{

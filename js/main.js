@@ -17,49 +17,45 @@ angular.module('jenkins.notifier', [])
 		$scope.open = function (url) {
 			$window.open(url);
 		};
+
+		$scope.decodeURI = decodeURI;
 	})
 	.service('Jobs', function ($rootScope, Storage, jenkins) {
-		var key = {urls: {}};
 		var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
 
-		var initialize = Storage.get(key);
+		var initialize = Storage.get({jobs: {}});
 
 		initialize.then(function (objects) {
-			angular.copy(objects.urls, Jobs.list);
+			angular.copy(objects.jobs, Jobs.list);
 		});
 
 		Storage.onChanged.addListener(function (objects) {
-			if (objects.urls) {
+			if (objects.jobs) {
 				$rootScope.$apply(function () {
-					angular.copy(objects.urls.newValue, Jobs.list);
+					angular.copy(objects.jobs.newValue, Jobs.list);
 				});
 			}
 		});
 
-		function defaultData(url) {
-			var name = url.replace(jobNameRegExp, "$1");
-			return {
-				name: name,
-				displayName: name
-			};
-		}
-
 		var Jobs = {
 			list: {},
 			add: function (url, data) {
-				var oldValue, newValue;
+				var result = {};
 				return initialize.then(function () {
-					oldValue = Jobs.list[url];
-					newValue = Jobs.list[url] = data || Jobs.list[url] || defaultData(url);
-					return Storage.set({urls: Jobs.list});
+					result.oldValue = Jobs.list[url];
+					result.newValue = Jobs.list[url] = data || Jobs.list[url] || {
+							name: decodeURI(url.replace(jobNameRegExp, "$1")),
+							url: url
+						};
+					return Storage.set({jobs: Jobs.list});
 				}).then(function () {
-					return {oldValue: oldValue, newValue: newValue};
+					return result;
 				});
 			},
 			remove: function (url) {
 				return initialize.then(function () {
 					delete Jobs.list[url];
-					return Storage.set({urls: Jobs.list});
+					return Storage.set({jobs: Jobs.list});
 				});
 			},
 			updateStatus: function (url) {
@@ -81,23 +77,24 @@ angular.module('jenkins.notifier', [])
 		return Jobs;
 	})
 	.service('jenkins', function ($http) {
+		var buildingRegExp = /_anime$/;
 		var colorToClass = {
 			blue: 'success', yellow: 'warning', red: 'danger'
 		};
 		var status = {
-			blue: 'Success', yellow: 'Unstable', red: 'Failure', notbuilt: 'Not built', disabled: 'Disabled'
+			blue: 'Success', yellow: 'Unstable', red: 'Failure', aborted: 'Aborted', notbuilt: 'Not built', disabled: 'Disabled'
 		};
 
 		return function (url) {
 			var url = url.charAt(url.length - 1) === '/' ? url : url + '/';
 			return $http.get(url + 'api/json/').then(function (res) {
 				var data = res.data;
-				var basicColor = (data.color || "").replace(/_anime$/, '');
+				var basicColor = (data.color || "").replace(buildingRegExp, '');
 				return {
-					name: data.name,
-					displayName: data.displayName,
+					name: data.displayName || data.name,
+					url: data.url,
 					buildable: data.buildable,
-					building: /_anime$/.test(data.color),
+					building: buildingRegExp.test(data.color),
 					status: status[basicColor] || basicColor,
 					statusClass: colorToClass[basicColor],
 					lastBuild: data.lastCompletedBuild || {}
