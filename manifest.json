@@ -1,12 +1,12 @@
 {
   "manifest_version": 2,
-  "name": "Jenkins Notifier",
-  "description": "This extension notifies on Jenkins build",
+  "name": "Yet Another Jenkins Notifier",
+  "description": "This extension notifies on Jenkins build.",
   "version": "1.0",
   "browser_action": {
     "default_icon": "img/icon.png",
     "default_popup": "popup.html",
-    "default_title": "Jenkins Notifier"
+    "default_title": "Yet Another Jenkins Notifier"
   },
   "icons": {
     "16": "img/icon16.png",
@@ -15,6 +15,10 @@
   },
   "background": {
     "scripts": ["js/angular.min.js", "js/main.js", "js/background.js"]
+  },
+  "options_ui": {
+    "page": "options.html",
+    "chrome_style": true
   },
   "permissions": [
     "<all_urls>",

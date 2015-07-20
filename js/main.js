@@ -1,8 +1,8 @@
 angular.module('jenkins.notifier', [])
-	.controller('JobListController', function ($scope, $window, Jobs) {
+	.controller('JobListController', function ($scope, $window, Runtime, Jobs, buildNotifier) {
 		$scope.jobs = Jobs.list;
 
-		Jobs.updateAllStatus();
+		Jobs.updateAllStatus().then(buildNotifier);
 
 		$scope.add = function (url) {
 			Jobs.add(url).then(function () {
@@ -17,6 +17,7 @@ angular.module('jenkins.notifier', [])
 		$scope.open = function (url) {
 			$window.open(url);
 		};
+		$scope.openOptionsPage = Runtime.openOptionsPage;
 
 		$scope.decodeURI = decodeURI;
 	})
@@ -102,6 +103,57 @@ angular.module('jenkins.notifier', [])
 			});
 		}
 	})
+	.service('buildWatcher', function ($interval, Jobs, Storage, buildNotifier) {
+		var defaultOptions = {options: {refreshTime: 60}};
+
+		function runUpdateAndNotify(refreshTime) {
+			return $interval(function () {
+				console.log("Updating status...");
+				Jobs.updateAllStatus().then(buildNotifier);
+			}, refreshTime * 1000);
+		}
+
+		return function () {
+			return Storage.get(defaultOptions).then(function (objects) {
+				var currentInterval = runUpdateAndNotify(objects.options.refreshTime);
+
+				Storage.onChanged.addListener(function (objects) {
+					if (objects.options) {
+						console.log("Refresh time changed:", objects.options.newValue.refreshTime);
+						$interval.cancel(currentInterval);
+						currentInterval = runUpdateAndNotify(objects.options.newValue.refreshTime);
+					}
+				});
+			});
+		};
+	})
+	.service('buildNotifier', function (Notification) {
+		return function (promises) {
+			promises.forEach(function (promise) {
+				promise.then(function (data) {
+					var oldValue = data.oldValue;
+					var newValue = data.newValue;
+
+					if (oldValue && oldValue.lastBuild && oldValue.lastBuild.number === newValue.lastBuild.number) {
+						return;
+					}
+
+					Notification.create(null, {
+							type: "basic",
+							title: "Build " + newValue.status + "! - " + newValue.name,
+							message: decodeURI(newValue.lastBuild.url),
+							iconUrl: "img/logo.svg"
+						},
+						{
+							onClicked: function () {
+								window.open(newValue.lastBuild.url);
+							}
+						}
+					);
+				});
+			});
+		};
+	})
 	.service('Storage', function ($q) {
 		var storage = chrome.storage.local;
 
@@ -156,6 +208,20 @@ angular.module('jenkins.notifier', [])
 					Listeners[notificationId] = listeners;
 					return notificationId;
 				});
+			}
+		};
+	})
+	.service('Runtime', function ($window) {
+		return {
+			openOptionsPage: function () {
+				var runtime = chrome.runtime;
+				if (runtime.openOptionsPage) {
+					// New way to open options pages, if supported (Chrome 42+).
+					runtime.openOptionsPage();
+				} else {
+					// Reasonable fallback.
+					$window.open(runtime.getURL('options.html'));
+				}
 			}
 		};
 	})
