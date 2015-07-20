@@ -36,7 +36,7 @@
     <h3>Jobs</h3>
     <!-- TODO: job list -->
     <div class="list-group">
-        <button ng-repeat="(url, job) in jobs" class="list-group-item" ng-click="open(url)">
+        <button ng-repeat="(url, job) in jobs" class="list-group-item" ng-class="{building: job.building}" ng-click="open(url)">
             <div class="pull-right">
                 <a ng-click="remove(url); $event.stopPropagation()" class="close"><span>&times;</span></a>
                 <br>
