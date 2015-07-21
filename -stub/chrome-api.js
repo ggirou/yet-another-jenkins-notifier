@@ -21,7 +21,12 @@ chrome.notifications = chrome.notifications || {
 			callback(notificationId || new Date().getTime());
 		}
 	};
-chrome.storage = chrome.storage || {};
+chrome.storage = chrome.storage || {
+		onChanged: {
+			addListener: function () {
+			}
+		}
+	};
 chrome.storage.local = chrome.storage.local || {
 		get: function (keys, callback) {
 			callback(JSON.parse(localStorage.getItem("storage")) || {});
