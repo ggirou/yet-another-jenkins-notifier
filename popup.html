@@ -50,7 +50,7 @@
                 <span ng-bind="job.name"></span>
                 <br>
                 <a class="small" ng-href="{{job.url}}" ng-click="$event.stopPropagation()" target="_blank"
-                   ng-bind="decodeURI(job.url)"></a>
+                   ng-bind="job.url | decodeURI"></a>
             </h4>
         </button>
     </div>

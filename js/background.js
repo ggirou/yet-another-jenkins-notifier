@@ -1,8 +1,6 @@
-angular.module('jenkins.notifier').run(function ($q, Jobs, buildWatcher) {
-	Jobs.updateAllStatus().then(function (promises) {
-		return $q.all(promises);
-	}).then(function () {
-		buildWatcher();
+angular.module('jenkins.notifier').run(function ($rootScope, $q, Jobs, buildWatcher) {
+	$rootScope.$on('jobsInitialized', function () {
+		Jobs.updateAllStatus().then($q.all).then(buildWatcher);
 	});
 });
 

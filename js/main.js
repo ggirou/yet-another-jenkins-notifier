@@ -1,8 +1,8 @@
 angular.module('jenkins.notifier', [])
 	.controller('JobListController', function ($scope, $window, Runtime, Jobs, buildNotifier) {
-		$scope.jobs = Jobs.list;
-
-		Jobs.updateAllStatus().then(buildNotifier);
+		$scope.$on('jobsInitialized', function () {
+			Jobs.updateAllStatus().then(buildNotifier);
+		});
 
 		$scope.add = function (url) {
 			Jobs.add(url).then(function () {
@@ -18,46 +18,61 @@ angular.module('jenkins.notifier', [])
 			$window.open(url);
 		};
 		$scope.openOptionsPage = Runtime.openOptionsPage;
-
-		$scope.decodeURI = decodeURI;
 	})
-	.service('Jobs', function ($rootScope, Storage, jenkins) {
-		var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
+	// Initialize options
+	.run(function ($rootScope, Storage) {
+		$rootScope.options = {
+			refreshTime: 60,
+			notification: 'all'
+		};
 
-		var initialize = Storage.get({jobs: {}});
+		Storage.get({options: $rootScope.options}).then(function (objects) {
+			$rootScope.options = objects.options;
+		});
 
-		initialize.then(function (objects) {
-			angular.copy(objects.jobs, Jobs.list);
+		Storage.onChanged.addListener(function (objects) {
+			if (objects.options) {
+				$rootScope.$apply(function () {
+					$rootScope.options = objects.options.newValue;
+				});
+			}
+		});
+	})
+	// Initialize jobs
+	.run(function ($rootScope, Storage) {
+		$rootScope.jobs = {};
+
+		Storage.get({jobs: $rootScope.jobs}).then(function (objects) {
+			$rootScope.jobs = objects.jobs;
+			$rootScope.$broadcast('jobsInitialized', $rootScope.jobs);
 		});
 
 		Storage.onChanged.addListener(function (objects) {
 			if (objects.jobs) {
 				$rootScope.$apply(function () {
-					angular.copy(objects.jobs.newValue, Jobs.list);
+					$rootScope.jobs = objects.jobs.newValue;
 				});
 			}
 		});
+	})
+	.service('Jobs', function ($rootScope, $q, Storage, jenkins) {
+		var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
 
 		var Jobs = {
-			list: {},
 			add: function (url, data) {
 				var result = {};
-				return initialize.then(function () {
-					result.oldValue = Jobs.list[url];
-					result.newValue = Jobs.list[url] = data || Jobs.list[url] || {
-							name: decodeURI(url.replace(jobNameRegExp, "$1")),
-							url: url
-						};
-					return Storage.set({jobs: Jobs.list});
-				}).then(function () {
+				result.oldValue = $rootScope.jobs[url];
+				result.newValue = $rootScope.jobs[url] = data || $rootScope.jobs[url] || {
+						name: decodeURI(url.replace(jobNameRegExp, "$1")),
+						url: url
+					};
+				return Storage.set({jobs: $rootScope.jobs}).then(function () {
 					return result;
 				});
 			},
 			remove: function (url) {
-				return initialize.then(function () {
-					delete Jobs.list[url];
-					return Storage.set({jobs: Jobs.list});
-				});
+				delete $rootScope.jobs[url];
+				return Storage.set({jobs: $rootScope.jobs});
 			},
 			updateStatus: function (url) {
 				return jenkins(url).then(function (data) {
@@ -65,13 +80,11 @@ angular.module('jenkins.notifier', [])
 				});
 			},
 			updateAllStatus: function () {
-				return initialize.then(function () {
-					var promises = [];
-					angular.forEach(Jobs.list, function (_, url) {
-						promises.push(Jobs.updateStatus(url));
-					});
-					return promises;
+				var promises = [];
+				angular.forEach($rootScope.jobs, function (_, url) {
+					promises.push(Jobs.updateStatus(url));
 				});
+				return $q.when(promises);
 			}
 		};
 
@@ -103,44 +116,50 @@ angular.module('jenkins.notifier', [])
 			});
 		}
 	})
-	.service('buildWatcher', function ($interval, Jobs, Storage, buildNotifier) {
-		var defaultOptions = {options: {refreshTime: 60}};
+	.service('buildWatcher', function ($rootScope, $interval, Jobs, buildNotifier) {
+		function runUpdateAndNotify(options) {
+			if (options.notification === 'none')
+				return;
 
-		function runUpdateAndNotify(refreshTime) {
 			return $interval(function () {
 				console.log("Updating status...");
 				Jobs.updateAllStatus().then(buildNotifier);
-			}, refreshTime * 1000);
+			}, options.refreshTime * 1000);
 		}
 
 		return function () {
-			return Storage.get(defaultOptions).then(function (objects) {
-				var currentInterval = runUpdateAndNotify(objects.options.refreshTime);
+			var currentInterval = runUpdateAndNotify($rootScope.options);
 
-				Storage.onChanged.addListener(function (objects) {
-					if (objects.options) {
-						console.log("Refresh time changed:", objects.options.newValue.refreshTime);
-						$interval.cancel(currentInterval);
-						currentInterval = runUpdateAndNotify(objects.options.newValue.refreshTime);
-					}
-				});
+			$rootScope.$watch('options', function (options) {
+				console.log("Options changed:", options);
+				$interval.cancel(currentInterval);
+				currentInterval = runUpdateAndNotify(options);
 			});
 		};
 	})
-	.service('buildNotifier', function (Notification) {
+	.service('buildNotifier', function ($rootScope, Notification) {
 		return function (promises) {
 			promises.forEach(function (promise) {
 				promise.then(function (data) {
-					var oldValue = data.oldValue;
+					var oldValue = data.oldValue || {};
 					var newValue = data.newValue;
 
-					if (oldValue && oldValue.lastBuild && oldValue.lastBuild.number === newValue.lastBuild.number) {
+					if ($rootScope.options.notification === 'none'
+						|| (oldValue.lastBuild && oldValue.lastBuild.number === newValue.lastBuild.number))
 						return;
+
+					var title = "Build " + newValue.status + "!";
+					if ($rootScope.options.notification === 'unstable' && newValue.status === 'Success') {
+						if (oldValue.status === 'Success') {
+							return;
+						} else {
+							title = "Build back to stable!";
+						}
 					}
 
 					Notification.create(null, {
 							type: "basic",
-							title: "Build " + newValue.status + "! - " + newValue.name,
+							title: title + " - " + newValue.name,
 							message: decodeURI(newValue.lastBuild.url),
 							iconUrl: "img/logo.svg"
 						},
@@ -153,6 +172,9 @@ angular.module('jenkins.notifier', [])
 				});
 			});
 		};
+	})
+	.filter('decodeURI', function () {
+		return decodeURI;
 	})
 	.service('Storage', function ($q) {
 		var storage = chrome.storage.local;
