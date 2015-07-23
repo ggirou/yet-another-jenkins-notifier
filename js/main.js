@@ -107,7 +107,7 @@ angular.module('jenkins.notifier', [])
 
 		return Jobs;
 	})
-	.service('jenkins', function ($http) {
+	.service('jenkins', function ($http, $q) {
 		var buildingRegExp = /_anime$/;
 		var colorToClass = {
 			blue: 'success', yellow: 'warning', red: 'danger'
@@ -122,11 +122,11 @@ angular.module('jenkins.notifier', [])
 		};
 
 		return function (url) {
+			var deferred = $q.defer();
 			var url = url.charAt(url.length - 1) === '/' ? url : url + '/';
-			return $http.get(url + 'api/json/').then(function (res) {
-				var data = res.data;
+			$http.get(url + 'api/json/').success(function (data) {
 				var basicColor = (data.color || "").replace(buildingRegExp, '');
-				return {
+				deferred.resolve({
 					name: data.displayName || data.name,
 					url: data.url,
 					buildable: data.buildable,
@@ -134,8 +134,17 @@ angular.module('jenkins.notifier', [])
 					status: status[basicColor] || basicColor,
 					statusClass: colorToClass[basicColor],
 					lastBuild: data.lastCompletedBuild || {}
-				};
+				});
+			}).error(function () {
+				var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
+				deferred.reject({
+					name: decodeURI(url.replace(jobNameRegExp, "$1")),
+					url: url,
+					status: 'Unreachable',
+					lastBuild: {}
+				});
 			});
+			return deferred.promise;
 		}
 	})
 	.service('buildWatcher', function ($rootScope, $interval, Jobs, buildNotifier) {
