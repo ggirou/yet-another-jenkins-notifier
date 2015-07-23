@@ -17,8 +17,12 @@
  */
 angular.module('jenkins.notifier', [])
 	.controller('JobListController', function ($scope, $window, Runtime, Jobs, buildNotifier) {
-		$scope.$on('jobsInitialized', function () {
+		$scope.$on('Jobs::jobs.initialized', function () {
 			Jobs.updateAllStatus().then(buildNotifier);
+		});
+		$scope.$on('Jobs::jobs.changed', function (_, jobs) {
+			console.log(jobs);
+			$scope.jobs = jobs;
 		});
 
 		$scope.add = function (url) {
@@ -36,7 +40,7 @@ angular.module('jenkins.notifier', [])
 		};
 		$scope.openOptionsPage = Runtime.openOptionsPage;
 	})
-	// Initialize options
+	// Initialize options and listen for changes
 	.run(function ($rootScope, Storage) {
 		$rootScope.options = {
 			refreshTime: 60,
@@ -55,41 +59,42 @@ angular.module('jenkins.notifier', [])
 			}
 		});
 	})
-	// Initialize jobs
-	.run(function ($rootScope, Storage) {
-		$rootScope.jobs = {};
+	// Initialize jobs and listen for changes
+	.run(function (Jobs, Storage, $rootScope) {
+		Jobs.jobs = {};
 
-		Storage.get({jobs: $rootScope.jobs}).then(function (objects) {
-			$rootScope.jobs = objects.jobs;
-			$rootScope.$broadcast('jobsInitialized', $rootScope.jobs);
+		Storage.get({jobs: Jobs.jobs}).then(function (objects) {
+			Jobs.jobs = objects.jobs;
+			$rootScope.$broadcast('Jobs::jobs.initialized', Jobs.jobs);
+			$rootScope.$broadcast('Jobs::jobs.changed', Jobs.jobs);
 		});
 
 		Storage.onChanged.addListener(function (objects) {
 			if (objects.jobs) {
-				$rootScope.$apply(function () {
-					$rootScope.jobs = objects.jobs.newValue;
-				});
+				Jobs.jobs = objects.jobs.newValue;
+				$rootScope.$broadcast('Jobs::jobs.changed', Jobs.jobs);
 			}
 		});
 	})
-	.service('Jobs', function ($rootScope, $q, Storage, jenkins) {
+	.service('Jobs', function ($q, Storage, jenkins) {
 		var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
 
 		var Jobs = {
+			jobs: {},
 			add: function (url, data) {
 				var result = {};
-				result.oldValue = $rootScope.jobs[url];
-				result.newValue = $rootScope.jobs[url] = data || $rootScope.jobs[url] || {
+				result.oldValue = Jobs.jobs[url];
+				result.newValue = Jobs.jobs[url] = data || Jobs.jobs[url] || {
 						name: decodeURI(url.replace(jobNameRegExp, "$1")),
 						url: url
 					};
-				return Storage.set({jobs: $rootScope.jobs}).then(function () {
+				return Storage.set({jobs: Jobs.jobs}).then(function () {
 					return result;
 				});
 			},
 			remove: function (url) {
-				delete $rootScope.jobs[url];
-				return Storage.set({jobs: $rootScope.jobs});
+				delete Jobs.jobs[url];
+				return Storage.set({jobs: Jobs.jobs});
 			},
 			updateStatus: function (url) {
 				return jenkins(url).then(function (data) {
@@ -98,7 +103,7 @@ angular.module('jenkins.notifier', [])
 			},
 			updateAllStatus: function () {
 				var promises = [];
-				angular.forEach($rootScope.jobs, function (_, url) {
+				angular.forEach(Jobs.jobs, function (_, url) {
 					promises.push(Jobs.updateStatus(url));
 				});
 				return $q.when(promises);

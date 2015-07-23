@@ -16,10 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 angular.module('jenkins.notifier').run(function ($rootScope, $q, Jobs, buildWatcher) {
-	$rootScope.$on('jobsInitialized', function () {
+	$rootScope.$on('Jobs::jobs.initialized', function () {
 		Jobs.updateAllStatus().then($q.all).then(buildWatcher);
 	});
-	$rootScope.$watch('jobs', function (jobs) {
+	$rootScope.$on('Jobs::jobs.changed', function (_, jobs) {
 		var counts = {};
 		angular.forEach(jobs, function (data) {
 			counts[data.status] = (counts[data.status] || 0) + 1;
