@@ -49,13 +49,13 @@ angular.module('jenkins.notifier', [])
 
 		Storage.get({options: $rootScope.options}).then(function (objects) {
 			$rootScope.options = objects.options;
+			$rootScope.$broadcast('Options::options.changed', $rootScope.options);
 		});
 
 		Storage.onChanged.addListener(function (objects) {
 			if (objects.options) {
-				$rootScope.$apply(function () {
-					$rootScope.options = objects.options.newValue;
-				});
+				$rootScope.options = objects.options.newValue;
+				$rootScope.$broadcast('Options::options.changed', $rootScope.options);
 			}
 		});
 	})
@@ -112,24 +112,29 @@ angular.module('jenkins.notifier', [])
 
 		return Jobs;
 	})
+	.config(function ($httpProvider) {
+		$httpProvider.useApplyAsync(true);
+		$httpProvider.defaults.cache = false;
+	})
 	.service('jenkins', function ($http, $q) {
-		var buildingRegExp = /_anime$/;
-		var colorToClass = {
-			blue: 'success', yellow: 'warning', red: 'danger'
-		};
-		var status = {
-			blue: 'Success',
-			yellow: 'Unstable',
-			red: 'Failure',
-			aborted: 'Aborted',
-			notbuilt: 'Not built',
-			disabled: 'Disabled'
-		};
-
 		return function (url) {
-			var deferred = $q.defer();
 			var url = url.charAt(url.length - 1) === '/' ? url : url + '/';
+
+			var deferred = $q.defer();
 			$http.get(url + 'api/json/').success(function (data) {
+				var buildingRegExp = /_anime$/;
+				var colorToClass = {
+					blue: 'success', yellow: 'warning', red: 'danger'
+				};
+				var status = {
+					blue: 'Success',
+					yellow: 'Unstable',
+					red: 'Failure',
+					aborted: 'Aborted',
+					notbuilt: 'Not built',
+					disabled: 'Disabled'
+				};
+
 				var basicColor = (data.color || "").replace(buildingRegExp, '');
 				deferred.resolve({
 					name: data.displayName || data.name,
@@ -141,14 +146,14 @@ angular.module('jenkins.notifier', [])
 					lastBuild: data.lastCompletedBuild || {}
 				});
 			}).error(function () {
-				var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
-				deferred.reject({
-					name: decodeURI(url.replace(jobNameRegExp, "$1")),
-					url: url,
-					status: 'Unreachable',
-					lastBuild: {}
+					var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
+					deferred.resolve({
+						name: decodeURI(url.replace(jobNameRegExp, "$1")),
+						url: url,
+						status: 'Unreachable',
+						lastBuild: {}
+					});
 				});
-			});
 			return deferred.promise;
 		}
 	})
@@ -157,16 +162,16 @@ angular.module('jenkins.notifier', [])
 			if (options.notification === 'none')
 				return;
 
-			return $interval(function () {
+			return $interval(function (Jobs, buildNotifier) {
 				console.log("Updating status...");
 				Jobs.updateAllStatus().then(buildNotifier);
-			}, options.refreshTime * 1000);
+			}, options.refreshTime * 1000, 0, false, Jobs, buildNotifier);
 		}
 
 		return function () {
 			var currentInterval = runUpdateAndNotify($rootScope.options);
 
-			$rootScope.$watch('options', function (options) {
+			$rootScope.$on('Options::options.changed', function (_, options) {
 				console.log("Options changed:", options);
 				$interval.cancel(currentInterval);
 				currentInterval = runUpdateAndNotify(options);
