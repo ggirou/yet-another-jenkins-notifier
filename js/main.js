@@ -76,18 +76,24 @@ angular.module('jenkins.notifier', [])
 			}
 		});
 	})
-	.service('Jobs', function ($q, Storage, jenkins) {
-		var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
-
+	.service('defaultJobData', function () {
+		return function (url, status) {
+			var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
+			return {
+				name: decodeURI(url.replace(jobNameRegExp, "$1")),
+				url: url,
+				status: status,
+				lastBuild: {}
+			};
+		}
+	})
+	.service('Jobs', function ($q, Storage, jenkins, defaultJobData) {
 		var Jobs = {
 			jobs: {},
 			add: function (url, data) {
 				var result = {};
 				result.oldValue = Jobs.jobs[url];
-				result.newValue = Jobs.jobs[url] = data || Jobs.jobs[url] || {
-						name: decodeURI(url.replace(jobNameRegExp, "$1")),
-						url: url
-					};
+				result.newValue = Jobs.jobs[url] = data || Jobs.jobs[url] || defaultJobData(url);
 				return Storage.set({jobs: Jobs.jobs}).then(function () {
 					return result;
 				});
@@ -116,7 +122,7 @@ angular.module('jenkins.notifier', [])
 		$httpProvider.useApplyAsync(true);
 		$httpProvider.defaults.cache = false;
 	})
-	.service('jenkins', function ($http, $q) {
+	.service('jenkins', function ($http, $q, defaultJobData) {
 		return function (url) {
 			var url = url.charAt(url.length - 1) === '/' ? url : url + '/';
 
@@ -146,14 +152,8 @@ angular.module('jenkins.notifier', [])
 					lastBuild: data.lastCompletedBuild || {}
 				});
 			}).error(function () {
-					var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
-					deferred.resolve({
-						name: decodeURI(url.replace(jobNameRegExp, "$1")),
-						url: url,
-						status: 'Unreachable',
-						lastBuild: {}
-					});
-				});
+				deferred.resolve(defaultJobData(url, 'Unreachable'));
+			});
 			return deferred.promise;
 		}
 	})
