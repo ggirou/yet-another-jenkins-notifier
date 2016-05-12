@@ -16,12 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 angular.module('jenkins.notifier', [])
-	.controller('JobListController', function ($scope, $window, Runtime, Jobs, buildNotifier) {
-		$scope.$on('Jobs::jobs.initialized', function () {
+	.controller('JobListController', function ($scope, $window, $interval, Runtime, Jobs, buildNotifier) {
+        var placeholderUrls = [
+            "http://jenkins/job/my_job/",
+            "http://jenkins/job/my_view/"
+        ];
+        var i = 0;
+        $scope.placholderUrl = placeholderUrls[0];
+        $interval(function () {
+            $scope.placholderUrl = placeholderUrls[++i % placeholderUrls.length];
+        }, 5000);
+
+        $scope.$on('Jobs::jobs.initialized', function () {
 			Jobs.updateAllStatus().then(buildNotifier);
 		});
 		$scope.$on('Jobs::jobs.changed', function (_, jobs) {
-			console.log(jobs);
 			$scope.jobs = jobs;
 		});
 
@@ -123,35 +132,55 @@ angular.module('jenkins.notifier', [])
 		$httpProvider.defaults.cache = false;
 	})
 	.service('jenkins', function ($http, $q, defaultJobData) {
+		var viewUrlRegExp = /^http:\/\/[^/]+\/view\/[^/]+\/$/;
+		var buildingRegExp = /_anime$/;
+		var colorToClass = {
+			blue: 'success', yellow: 'warning', red: 'danger'
+		};
+		var status = {
+			blue: 'Success',
+			yellow: 'Unstable',
+			red: 'Failure',
+			aborted: 'Aborted',
+			notbuilt: 'Not built',
+			disabled: 'Disabled'
+		};
+
+		function jobMapping(data) {
+			var basicColor = (data.color || "").replace(buildingRegExp, '');
+			return {
+				name: data.displayName || data.name,
+				url: data.url,
+				building: buildingRegExp.test(data.color),
+				status: status[basicColor] || basicColor,
+				statusClass: colorToClass[basicColor],
+				lastBuild: data.lastCompletedBuild || {}
+			};
+		}
+
 		return function (url) {
-			var url = url.charAt(url.length - 1) === '/' ? url : url + '/';
+			url = url.charAt(url.length - 1) === '/' ? url : url + '/';
 
 			var deferred = $q.defer();
 			$http.get(url + 'api/json/').success(function (data) {
-				var buildingRegExp = /_anime$/;
-				var colorToClass = {
-					blue: 'success', yellow: 'warning', red: 'danger'
-				};
-				var status = {
-					blue: 'Success',
-					yellow: 'Unstable',
-					red: 'Failure',
-					aborted: 'Aborted',
-					notbuilt: 'Not built',
-					disabled: 'Disabled'
-				};
-
-				var basicColor = (data.color || "").replace(buildingRegExp, '');
-				deferred.resolve({
-					name: data.displayName || data.name,
-					url: data.url,
-					buildable: data.buildable,
-					building: buildingRegExp.test(data.color),
-					status: status[basicColor] || basicColor,
-					statusClass: colorToClass[basicColor],
-					lastBuild: data.lastCompletedBuild || {}
-				});
-			}).error(function () {
+                if (viewUrlRegExp.test(url)) {
+                    var view = {
+                        isView: true,
+                        name: data.name,
+                        url: data.url,
+                        jobs: data.jobs.reduce(function (jobs, job) {
+                            var job = jobMapping(job);
+                            jobs[job.url] = job;
+                            return jobs;
+                        }, {}),
+                        lastBuild: {}
+                    };
+                    console.log(view);
+                    deferred.resolve(view);
+                } else {
+                    deferred.resolve(jobMapping(data));
+                }
+            }).error(function () {
 				deferred.resolve(defaultJobData(url, 'Unreachable'));
 			});
 			return deferred.promise;
@@ -163,7 +192,6 @@ angular.module('jenkins.notifier', [])
 				return;
 
 			return $interval(function (Jobs, buildNotifier) {
-				console.log("Updating status...");
 				Jobs.updateAllStatus().then(buildNotifier);
 			}, options.refreshTime * 1000, 0, false, Jobs, buildNotifier);
 		}
@@ -172,7 +200,6 @@ angular.module('jenkins.notifier', [])
 			var currentInterval = runUpdateAndNotify($rootScope.options);
 
 			$rootScope.$on('Options::options.changed', function (_, options) {
-				console.log("Options changed:", options);
 				$interval.cancel(currentInterval);
 				currentInterval = runUpdateAndNotify(options);
 			});
