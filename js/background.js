@@ -22,7 +22,13 @@ angular.module('jenkins.notifier').run(function ($rootScope, $q, Jobs, buildWatc
 	$rootScope.$on('Jobs::jobs.changed', function (_, jobs) {
 		var counts = {};
 		angular.forEach(jobs, function (data) {
-			counts[data.status] = (counts[data.status] || 0) + 1;
+			if(data.isView) {
+				angular.forEach(data.jobs, function (viewJob) {
+					counts[viewJob.status] = (counts[viewJob.status] || 0) + 1;
+				});
+			} else {
+				counts[data.status] = (counts[data.status] || 0) + 1;
+			}
 		});
 
 		var count = counts.Failure || counts.Unstable || counts.Success || 0;
