@@ -229,7 +229,7 @@ angular.module('jenkins.notifier', [])
                 return;
 
             var title = "Build " + newValue.status + "!";
-            if ($rootScope.options.notification === 'unstable' && newValue.status === 'Success') {
+            if ($rootScope.options.notification === 'unstable' && newValue.status === 'Success' && newValue.lastBuildNumber > 1) {
                 if (oldValue.status === 'Success') {
                     return;
                 } else {
