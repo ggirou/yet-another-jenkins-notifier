@@ -43,7 +43,7 @@ body, section {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 66%;
+    width: 100%;
 }
 
 .building {

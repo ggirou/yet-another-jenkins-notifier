@@ -16,12 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 angular.module('jenkins.notifier', [])
-	.controller('JobListController', function ($scope, $window, Runtime, Jobs, buildNotifier) {
-		$scope.$on('Jobs::jobs.initialized', function () {
+	.controller('JobListController', function ($scope, $window, $interval, Runtime, Jobs, buildNotifier) {
+        var placeholderUrls = [
+            "http://jenkins/ for all jobs",
+            "http://jenkins/job/my_job/ for one job",
+            "http://jenkins/job/my_view/ for view jobs"
+        ];
+        var i = 0;
+        $scope.placholderUrl = placeholderUrls[0];
+        $interval(function () {
+            $scope.placholderUrl = placeholderUrls[++i % placeholderUrls.length];
+        }, 5000);
+
+        $scope.$on('Jobs::jobs.initialized', function () {
 			Jobs.updateAllStatus().then(buildNotifier);
 		});
 		$scope.$on('Jobs::jobs.changed', function (_, jobs) {
-			console.log(jobs);
 			$scope.jobs = jobs;
 		});
 
@@ -123,35 +133,72 @@ angular.module('jenkins.notifier', [])
 		$httpProvider.defaults.cache = false;
 	})
 	.service('jenkins', function ($http, $q, defaultJobData) {
+		var viewUrlRegExp = /^http:\/\/[^/]+\/(view\/[^/]+\/)?$/;
+		var buildingRegExp = /_anime$/;
+		var colorToClass = {
+			blue: 'success', yellow: 'warning', red: 'danger'
+		};
+		var status = {
+			blue: 'Success',
+			yellow: 'Unstable',
+			red: 'Failure',
+			aborted: 'Aborted',
+			notbuilt: 'Not built',
+			disabled: 'Disabled'
+		};
+
+		function jobMapping(data) {
+			var basicColor = (data.color || "").replace(buildingRegExp, '');
+            var lastBuild = data.lastCompletedBuild || {};
+			return {
+				name: data.displayName || data.name,
+				url: data.url,
+				building: buildingRegExp.test(data.color),
+				status: status[basicColor] || basicColor,
+				statusClass: colorToClass[basicColor],
+                lastBuildNumber: lastBuild.number || ""
+			};
+		}
+
 		return function (url) {
-			var url = url.charAt(url.length - 1) === '/' ? url : url + '/';
+			url = url.charAt(url.length - 1) === '/' ? url : url + '/';
 
 			var deferred = $q.defer();
 			$http.get(url + 'api/json/').success(function (data) {
-				var buildingRegExp = /_anime$/;
-				var colorToClass = {
-					blue: 'success', yellow: 'warning', red: 'danger'
-				};
-				var status = {
-					blue: 'Success',
-					yellow: 'Unstable',
-					red: 'Failure',
-					aborted: 'Aborted',
-					notbuilt: 'Not built',
-					disabled: 'Disabled'
-				};
+                if (viewUrlRegExp.test(url)) {
+                    var view = {
+                        isView: true,
+                        name: data.name || data.nodeName || "All jobs",
+                        url: data.url || url,
+                        jobs: data.jobs.reduce(function (jobs, job) {
+                            var job = jobMapping(job);
+                            jobs[job.name] = job;
+                            return jobs;
+                        }, {})
+                    };
 
-				var basicColor = (data.color || "").replace(buildingRegExp, '');
-				deferred.resolve({
-					name: data.displayName || data.name,
-					url: data.url,
-					buildable: data.buildable,
-					building: buildingRegExp.test(data.color),
-					status: status[basicColor] || basicColor,
-					statusClass: colorToClass[basicColor],
-					lastBuild: data.lastCompletedBuild || {}
-				});
-			}).error(function () {
+					$http.get(url + 'cc.xml').success(function(data) {
+						// Hacky way to parse xml!
+						var projects = angular.element(data).find("project");
+						angular.forEach(projects, function(project) {
+                            project = angular.element(project);
+                            var name = project.attr("name");
+                            var url = project.attr("webUrl");
+                            var lastBuildNumber = project.attr("lastBuildLabel");
+
+                            var job = view.jobs[name];
+                            if(job && !job.lastBuildNumber) {
+                                job.lastBuildNumber = lastBuildNumber;
+                                job.url = url;
+                            }
+						});
+
+						deferred.resolve(view);
+					});
+                } else {
+                    deferred.resolve(jobMapping(data));
+                }
+            }).error(function () {
 				deferred.resolve(defaultJobData(url, 'Unreachable'));
 			});
 			return deferred.promise;
@@ -163,7 +210,6 @@ angular.module('jenkins.notifier', [])
 				return;
 
 			return $interval(function (Jobs, buildNotifier) {
-				console.log("Updating status...");
 				Jobs.updateAllStatus().then(buildNotifier);
 			}, options.refreshTime * 1000, 0, false, Jobs, buildNotifier);
 		}
@@ -172,48 +218,60 @@ angular.module('jenkins.notifier', [])
 			var currentInterval = runUpdateAndNotify($rootScope.options);
 
 			$rootScope.$on('Options::options.changed', function (_, options) {
-				console.log("Options changed:", options);
 				$interval.cancel(currentInterval);
 				currentInterval = runUpdateAndNotify(options);
 			});
 		};
 	})
-	.service('buildNotifier', function ($rootScope, Notification) {
-		return function (promises) {
-			promises.forEach(function (promise) {
-				promise.then(function (data) {
-					var oldValue = data.oldValue || {};
-					var newValue = data.newValue;
+    .service('buildNotifier', function ($rootScope, Notification) {
+        function jobNotifier(newValue, oldValue) {
+            if (oldValue.lastBuildNumber == newValue.lastBuildNumber)
+                return;
 
-					if ($rootScope.options.notification === 'none'
-						|| (oldValue.lastBuild && oldValue.lastBuild.number === newValue.lastBuild.number))
-						return;
+            var title = "Build " + newValue.status + "!";
+            if ($rootScope.options.notification === 'unstable' && newValue.status === 'Success' && newValue.lastBuildNumber > 1) {
+                if (oldValue.status === 'Success') {
+                    return;
+                } else {
+                    title = "Build back to stable!";
+                }
+            }
 
-					var title = "Build " + newValue.status + "!";
-					if ($rootScope.options.notification === 'unstable' && newValue.status === 'Success') {
-						if (oldValue.status === 'Success') {
-							return;
-						} else {
-							title = "Build back to stable!";
-						}
-					}
+            Notification.create(null, {
+                    type: "basic",
+                    title: title + " - " + newValue.name,
+                    message: decodeURI(newValue.url + newValue.lastBuildNumber),
+                    iconUrl: "img/logo.svg"
+                },
+                {
+                    onClicked: function () {
+                        window.open(newValue.url + newValue.lastBuildNumber);
+                    }
+                }
+            );
+        }
 
-					Notification.create(null, {
-							type: "basic",
-							title: title + " - " + newValue.name,
-							message: decodeURI(newValue.lastBuild.url),
-							iconUrl: "img/logo.svg"
-						},
-						{
-							onClicked: function () {
-								window.open(newValue.lastBuild.url);
-							}
-						}
-					);
-				});
-			});
-		};
-	})
+        return function (promises) {
+            promises.forEach(function (promise) {
+                promise.then(function (data) {
+                    // Disable notification for pending promises
+                    if ($rootScope.options.notification === 'none')
+                        return;
+
+                    var oldValue = data.oldValue || {};
+                    var newValue = data.newValue;
+
+                    if (newValue.isView) {
+                        angular.forEach(newValue.jobs, function (job, name) {
+                            jobNotifier(job, oldValue.jobs && oldValue.jobs[name]);
+                        });
+                    } else {
+                        jobNotifier(newValue, oldValue);
+                    }
+                });
+            });
+        };
+    })
 	.filter('decodeURI', function () {
 		return decodeURI;
 	})

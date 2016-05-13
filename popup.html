@@ -22,7 +22,7 @@
             <div class="input-group">
                 <label class="input-group-addon" for="url">Url</label>
                 <input type="url" class="form-control" id="url" name="url" ng-model="url"
-                       autofocus placeholder="http://jenkins/job/your_job/" required>
+                       autofocus tabindex="1" placeholder="{{placholderUrl}}" required>
                 <span class="input-group-btn">
                     <button type="submit" class="btn btn-primary" ng-disabled="urlForm.$invalid">
                         <span class="glyphicon glyphicon-plus"></span>
@@ -35,21 +35,47 @@
 </section>
 <section class="col-xs-12">
     <h3>Jobs</h3>
-    <!-- TODO: job list -->
     <div class="list-group">
-        <button ng-repeat="(url, job) in jobs" class="list-group-item" ng-class="{building: job.building}" ng-click="open(url)">
-            <div class="pull-right">
-                <a ng-click="remove(url); $event.stopPropagation()" class="close"><span>&times;</span></a>
-                <br>
-                <span class="badge alert-{{job.statusClass}}" ng-bind="job.status"></span>
+        <button ng-repeat="(url, job) in jobs" class="list-group-item" ng-class="{building: job.building}"
+                ng-click="open(url)">
+            <div class="row">
+                <div class="col-xs-2">
+                    <img class="img-rounded avatar alert-{{job.statusClass}}" alt="Jenkins" src="img/icon48.png">
+                </div>
+                <div class="col-xs-8">
+                    <div class="job-title no-margin inline-block">
+                        <h4>
+                            <span ng-bind="job.name"></span>
+                            <br>
+                            <a class="small" ng-href="{{job.url}}" ng-click="$event.stopPropagation()" target="_blank"
+                               ng-bind="job.url | decodeURI"></a>
+                            <br>
+                        </h4>
+                    </div>
+                </div>
+                <div class="col-xs-2">
+                    <div class="pull-right">
+                        <a ng-click="remove(url); $event.stopPropagation()" class="close"><span>&times;</span></a>
+                        <br>
+                        <span class="badge alert-{{job.statusClass}}" ng-bind="job.status"></span>
+                    </div>
+                </div>
             </div>
-            <img class="img-rounded avatar alert-{{job.statusClass}}" alt="Jenkins" src="img/icon48.png">
-            <h4 class="job-title no-margin inline-block">
-                <span ng-bind="job.name"></span>
-                <br>
-                <a class="small" ng-href="{{job.url}}" ng-click="$event.stopPropagation()" target="_blank"
-                   ng-bind="job.url | decodeURI"></a>
-            </h4>
+            <div ng-if="job.jobs">
+                <ul class="list-unstyled">
+                    <li class="row" ng-repeat="(url, job) in job.jobs" ng-class="{building: job.building}">
+                        <div class="col-xs-offset-2 col-xs-8">
+                            <div class="job-title">
+                                <a ng-href="{{job.url}}" ng-bind="job.name" ng-click="$event.stopPropagation()" target="_blank"></a>
+                            </div>
+                        </div>
+                        <div class="col-xs-2">
+                            <span class="pull-right badge alert-{{job.statusClass}}"
+                                  ng-bind="job.status"></span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
         </button>
     </div>
 </section>

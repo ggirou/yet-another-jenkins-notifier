@@ -1,0 +1,17 @@
+<Projects>
+    <Project activity="Building" lastBuildStatus="Failure" lastBuildLabel="3"
+             webUrl="http://localhost:8080/view/Your%20View/job/Building/" name="Building"
+             lastBuildTime="2016-05-12T06:22:02Z"/>
+    <Project activity="Sleeping" lastBuildStatus="Failure" lastBuildLabel="1"
+             webUrl="http://localhost:8080/view/Your%20View/job/Cancelled/" name="Cancelled"
+             lastBuildTime="2016-05-12T04:38:39Z"/>
+    <Project activity="Sleeping" lastBuildStatus="Unknown" lastBuildLabel="1"
+             webUrl="http://localhost:8080/view/Your%20View/job/Disabled/" name="Disabled"
+             lastBuildTime="2016-05-12T04:27:08Z"/>
+    <Project activity="Sleeping" lastBuildStatus="Failure" lastBuildLabel="19"
+             webUrl="http://localhost:8080/view/Your%20View/job/Fail/" name="Fail"
+             lastBuildTime="2016-05-12T16:55:41Z"/>
+    <Project activity="Sleeping" lastBuildStatus="Success" lastBuildLabel="1"
+             webUrl="http://localhost:8080/view/Your%20View/job/Success/" name="Success"
+             lastBuildTime="2016-05-12T04:15:14Z"/>
+</Projects>
