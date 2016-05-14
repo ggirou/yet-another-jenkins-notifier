@@ -36,8 +36,7 @@
 <section class="col-xs-12">
     <h3>Jobs</h3>
     <div class="list-group">
-        <button ng-repeat="(url, job) in jobs" class="list-group-item" ng-class="{building: job.building}"
-                ng-click="open(url)">
+        <div ng-repeat="(url, job) in jobs" class="list-group-item" ng-class="{building: job.building}">
             <div class="row">
                 <div class="col-xs-2">
                     <img class="img-rounded avatar alert-{{job.statusClass}}" alt="Jenkins" src="img/icon48.png">
@@ -47,17 +46,15 @@
                         <h4>
                             <span ng-bind="job.name"></span>
                             <br>
-                            <a class="small" ng-href="{{job.url}}" ng-click="$event.stopPropagation()" target="_blank"
-                               ng-bind="job.url | decodeURI"></a>
-                            <br>
+                            <a class="small" ng-href="{{job.url}}" target="_blank" ng-bind="job.url | decodeURI"></a>
                         </h4>
                     </div>
                 </div>
                 <div class="col-xs-2">
                     <div class="pull-right">
-                        <a ng-click="remove(url); $event.stopPropagation()" class="close"><span>&times;</span></a>
-                        <br>
-                        <span class="badge alert-{{job.statusClass}}" ng-bind="job.status"></span>
+                        <button type="button" class="close" aria-label="Close" ng-click="remove(url);"><span
+                                aria-hidden="true">&times;</span></button>
+                        <p class="badge alert-{{job.statusClass}}" ng-bind="job.status"></p>
                     </div>
                 </div>
             </div>
@@ -66,7 +63,7 @@
                     <li class="row" ng-repeat="(url, job) in job.jobs" ng-class="{building: job.building}">
                         <div class="col-xs-offset-2 col-xs-8">
                             <div class="job-title">
-                                <a ng-href="{{job.url}}" ng-bind="job.name" ng-click="$event.stopPropagation()" target="_blank"></a>
+                                <a ng-href="{{job.url}}" ng-bind="job.name" target="_blank"></a>
                             </div>
                         </div>
                         <div class="col-xs-2">
@@ -76,7 +73,7 @@
                     </li>
                 </ul>
             </div>
-        </button>
+        </div>
     </div>
 </section>
 </body>

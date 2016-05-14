@@ -45,9 +45,6 @@ angular.module('jenkins.notifier', [])
 
 		$scope.remove = Jobs.remove;
 
-		$scope.open = function (url) {
-			$window.open(url);
-		};
 		$scope.openOptionsPage = Runtime.openOptionsPage;
 	})
 	// Initialize options and listen for changes
