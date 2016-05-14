@@ -25,5 +25,5 @@ Found a bug? Please submit an issue on [GitHub](https://github.com/ggirou/yet-an
 
 #### Copyright and license
 
-Copyright 2015 Yet Another Jenkins Notifier.
+Copyright 2016 Yet Another Jenkins Notifier.
 Released under [GNU General Public License v3.0](https://github.com/ggirou/yet-another-jenkins-notifier/blob/master/LICENSE).
