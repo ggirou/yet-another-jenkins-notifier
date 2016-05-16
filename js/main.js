@@ -194,8 +194,8 @@ angular.module('jenkins.notifier', [])
         } else {
           return jobMapping(data);
         }
-      }).catch(function () {
-        return defaultJobData(url, 'Unreachable');
+      }).catch(function (res) {
+        return defaultJobData(url, res.status == 403 ? 'Forbidden' : 'Unreachable');
       });
     }
   })
