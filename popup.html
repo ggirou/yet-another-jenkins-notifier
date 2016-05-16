@@ -1,80 +1,80 @@
 <!doctype html>
 <html ng-app="jenkins.notifier">
 <head>
-    <title>Yet Another Jenkins Notifier</title>
+  <title>Yet Another Jenkins Notifier</title>
 
-    <script src="js/angular.min.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/ga.js"></script>
+  <script src="js/angular.min.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/ga.js"></script>
 
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/custom.css" rel="stylesheet">
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/custom.css" rel="stylesheet">
 </head>
 <body class="container-fluid" ng-controller="JobListController">
 <section class="col-xs-12">
-    <h2>
-        Yet Another Jenkins Notifier
-        <small><a href="#" ng-click="openOptionsPage()"><span class="glyphicon glyphicon-cog"></span></a></small>
-    </h2>
-    <hr>
-    <form name="urlForm" class="form-inline" ng-submit="add(url)">
-        <div class="form-group" ng-class="{'has-error': urlForm.url.$invalid && !urlForm.url.$pristine}">
-            <div class="input-group">
-                <label class="input-group-addon" for="url">Url</label>
-                <input type="url" class="form-control" id="url" name="url" ng-model="url"
-                       autofocus tabindex="1" placeholder="{{placholderUrl}}" required>
+  <h2>
+    Yet Another Jenkins Notifier
+    <small><a href="#" ng-click="openOptionsPage()"><span class="glyphicon glyphicon-cog"></span></a></small>
+  </h2>
+  <hr>
+  <form name="urlForm" class="form-inline" ng-submit="add(url)">
+    <div class="form-group" ng-class="{'has-error': urlForm.url.$invalid && !urlForm.url.$pristine}">
+      <div class="input-group">
+        <label class="input-group-addon" for="url">Url</label>
+        <input type="url" class="form-control" id="url" name="url" ng-model="url"
+               autofocus tabindex="1" placeholder="{{placholderUrl}}" required>
                 <span class="input-group-btn">
                     <button type="submit" class="btn btn-primary" ng-disabled="urlForm.$invalid">
                         <span class="glyphicon glyphicon-plus"></span>
                     </button>
                 </span>
-            </div>
-            <div ng-if="urlForm.url.$error.url" class="help-block">Not a URL</div>
-        </div>
-    </form>
+      </div>
+      <div ng-if="urlForm.url.$error.url" class="help-block">Not a URL</div>
+    </div>
+  </form>
 </section>
 <section class="col-xs-12">
-    <h3>Jobs</h3>
-    <div class="list-group">
-        <div ng-repeat="(url, job) in jobs" class="list-group-item" ng-class="{building: job.building}">
-            <div class="row">
-                <div class="col-xs-2">
-                    <img class="img-rounded avatar alert-{{job.statusClass}}" alt="Jenkins" src="img/icon48.png">
-                </div>
-                <div class="col-xs-8">
-                    <div class="job-title no-margin inline-block">
-                        <h4>
-                            <span ng-bind="job.name"></span>
-                            <br>
-                            <a class="small" ng-href="{{job.url}}" target="_blank" ng-bind="job.url | decodeURI"></a>
-                        </h4>
-                    </div>
-                </div>
-                <div class="col-xs-2">
-                    <div class="pull-right">
-                        <button type="button" class="close" aria-label="Close" ng-click="remove(url);"><span
-                                aria-hidden="true">&times;</span></button>
-                        <p class="badge alert-{{job.statusClass}}" ng-bind="job.status"></p>
-                    </div>
-                </div>
+  <h3>Jobs</h3>
+  <div class="list-group">
+    <div ng-repeat="(url, job) in jobs" class="list-group-item" ng-class="{building: job.building}">
+      <div class="row">
+        <div class="col-xs-2">
+          <img class="img-rounded avatar alert-{{job.statusClass}}" alt="Jenkins" src="img/icon48.png">
+        </div>
+        <div class="col-xs-8">
+          <div class="job-title no-margin inline-block">
+            <h4>
+              <span ng-bind="job.name"></span>
+              <br>
+              <a class="small" ng-href="{{job.url}}" target="_blank" ng-bind="job.url | decodeURI"></a>
+            </h4>
+          </div>
+        </div>
+        <div class="col-xs-2">
+          <div class="pull-right">
+            <button type="button" class="close" aria-label="Close" ng-click="remove(url);"><span
+              aria-hidden="true">&times;</span></button>
+            <p class="badge alert-{{job.statusClass}}" ng-bind="job.status"></p>
+          </div>
+        </div>
+      </div>
+      <div ng-if="job.jobs">
+        <ul class="list-unstyled">
+          <li class="row" ng-repeat="(url, job) in job.jobs" ng-class="{building: job.building}">
+            <div class="col-xs-offset-2 col-xs-8">
+              <div class="job-title">
+                <a ng-href="{{job.url}}" ng-bind="job.name" target="_blank"></a>
+              </div>
             </div>
-            <div ng-if="job.jobs">
-                <ul class="list-unstyled">
-                    <li class="row" ng-repeat="(url, job) in job.jobs" ng-class="{building: job.building}">
-                        <div class="col-xs-offset-2 col-xs-8">
-                            <div class="job-title">
-                                <a ng-href="{{job.url}}" ng-bind="job.name" target="_blank"></a>
-                            </div>
-                        </div>
-                        <div class="col-xs-2">
+            <div class="col-xs-2">
                             <span class="pull-right badge alert-{{job.statusClass}}"
                                   ng-bind="job.status"></span>
-                        </div>
-                    </li>
-                </ul>
             </div>
-        </div>
+          </li>
+        </ul>
+      </div>
     </div>
+  </div>
 </section>
 </body>
 </html>

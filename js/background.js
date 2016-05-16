@@ -16,26 +16,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 angular.module('jenkins.notifier').run(function ($rootScope, $q, Jobs, buildWatcher) {
-	$rootScope.$on('Jobs::jobs.initialized', function () {
-		Jobs.updateAllStatus().then($q.all).then(buildWatcher);
-	});
-	$rootScope.$on('Jobs::jobs.changed', function (_, jobs) {
-		var counts = {};
-		angular.forEach(jobs, function (data) {
-			if(data.isView) {
-				angular.forEach(data.jobs, function (viewJob) {
-					counts[viewJob.status] = (counts[viewJob.status] || 0) + 1;
-				});
-			} else {
-				counts[data.status] = (counts[data.status] || 0) + 1;
-			}
-		});
+  $rootScope.$on('Jobs::jobs.initialized', function () {
+    Jobs.updateAllStatus().then($q.all).then(buildWatcher);
+  });
+  $rootScope.$on('Jobs::jobs.changed', function (_, jobs) {
+    var counts = {};
+    angular.forEach(jobs, function (data) {
+      if (data.isView) {
+        angular.forEach(data.jobs, function (viewJob) {
+          counts[viewJob.status] = (counts[viewJob.status] || 0) + 1;
+        });
+      } else {
+        counts[data.status] = (counts[data.status] || 0) + 1;
+      }
+    });
 
-		var count = counts.Failure || counts.Unstable || counts.Success || 0;
-		var color = counts.Failure ? '#c9302c' : counts.Unstable ? '#f0ad4e' : '#5cb85c';
-		chrome.browserAction.setBadgeText({text: count.toString()});
-		chrome.browserAction.setBadgeBackgroundColor({color: color});
-	});
+    var count = counts.Failure || counts.Unstable || counts.Success || 0;
+    var color = counts.Failure ? '#c9302c' : counts.Unstable ? '#f0ad4e' : '#5cb85c';
+    chrome.browserAction.setBadgeText({text: count.toString()});
+    chrome.browserAction.setBadgeBackgroundColor({color: color});
+  });
 });
 
 angular.bootstrap(document, ['jenkins.notifier']);

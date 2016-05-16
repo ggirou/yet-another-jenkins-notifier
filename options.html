@@ -1,38 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Yet Another Jenkins Notifier Options</title>
-    <style>
-        fieldset[disabled] {
-            opacity: 0.75;
-        }
-    </style>
+  <title>Yet Another Jenkins Notifier Options</title>
+  <style>
+    fieldset[disabled] {
+      opacity: 0.75;
+    }
+  </style>
 </head>
 
 <body>
 <fieldset>
-    <legend>Notifications</legend>
-    <i>Show popup notifications:</i>
-    <br><br>
-    <label>
-        <input type="radio" name="notification" value="all" checked>
-        On every build
-    </label>
-    <label>
-        <input type="radio" name="notification" value="unstable">
-        On every unstable build
-    </label>
-    <label>
-        <input type="radio" name="notification" value="none">
-        Never
-    </label>
+  <legend>Notifications</legend>
+  <i>Show popup notifications:</i>
+  <br><br>
+  <label>
+    <input type="radio" name="notification" value="all" checked>
+    On every build
+  </label>
+  <label>
+    <input type="radio" name="notification" value="unstable">
+    On every unstable build
+  </label>
+  <label>
+    <input type="radio" name="notification" value="none">
+    Never
+  </label>
 </fieldset>
 <br>
 <fieldset id="refreshTimeFieldset">
-    <legend>Refresh time</legend>
-    <i>Check server for changes every <b><span id="refreshTimeSpan"></span> seconds</b>:</i>
-    <br><br>
-    <input style="width: 100%;" min="5" max="120" step="5" range-type="s" type="range" id="refreshTime">
+  <legend>Refresh time</legend>
+  <i>Check server for changes every <b><span id="refreshTimeSpan"></span> seconds</b>:</i>
+  <br><br>
+  <input style="width: 100%;" min="5" max="120" step="5" range-type="s" type="range" id="refreshTime">
 </fieldset>
 
 <p style="visibility: hidden" id="status">Options saved.</p>
