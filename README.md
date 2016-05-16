@@ -24,7 +24,7 @@ _____________
 
 # Author
 
-This extension is created by Guillaume Girou ([Google+](https://plus.google.com/+GuillaumeGirou), [Twitter](https://twitter.com/GirouGuillaume), [GitHub](https://github.com/ggirou)).
+This extension was created by Guillaume Girou ([Google+](https://plus.google.com/+GuillaumeGirou), [Twitter](https://twitter.com/GirouGuillaume), [GitHub](https://github.com/ggirou)).
 
 # Source
 
