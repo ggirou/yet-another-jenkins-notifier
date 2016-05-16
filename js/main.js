@@ -219,6 +219,7 @@ angular.module('jenkins.notifier', [])
   })
   .service('buildNotifier', function ($rootScope, Notification) {
     function jobNotifier(newValue, oldValue) {
+      oldValue = oldValue || {};
       if (oldValue.lastBuildNumber == newValue.lastBuildNumber)
         return;
 
@@ -252,12 +253,12 @@ angular.module('jenkins.notifier', [])
           if ($rootScope.options.notification === 'none')
             return;
 
-          var oldValue = data.oldValue || {};
+          var oldValue = data.oldValue;
           var newValue = data.newValue;
 
           if (newValue.isView) {
             angular.forEach(newValue.jobs, function (job, name) {
-              jobNotifier(job, oldValue.jobs && oldValue.jobs[name]);
+              jobNotifier(job, oldValue && oldValue.jobs && oldValue.jobs[name]);
             });
           } else {
             jobNotifier(newValue, oldValue);
