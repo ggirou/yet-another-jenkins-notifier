@@ -160,23 +160,23 @@ angular.module('jenkins.notifier', [])
     return function (url) {
       url = url.charAt(url.length - 1) === '/' ? url : url + '/';
 
-      var deferred = $q.defer();
-      $http.get(url + 'api/json/').success(function (data) {
+      return $http.get(url + 'api/json/').then(function (res) {
+        var data = res.data;
         if (viewUrlRegExp.test(url)) {
           var view = {
             isView: true,
             name: data.name || data.nodeName || "All jobs",
             url: data.url || url,
-            jobs: data.jobs.reduce(function (jobs, job) {
-              var job = jobMapping(job);
+            jobs: data.jobs.reduce(function (jobs, data) {
+              var job = jobMapping(data);
               jobs[job.name] = job;
               return jobs;
             }, {})
           };
 
-          $http.get(url + 'cc.xml').success(function (data) {
+          return $http.get(url + 'cc.xml').then(function (res) {
             // Hacky way to parse xml!
-            var projects = angular.element(data).find("project");
+            var projects = angular.element(res.data).find("project");
             angular.forEach(projects, function (project) {
               project = angular.element(project);
               var name = project.attr("name");
@@ -189,16 +189,14 @@ angular.module('jenkins.notifier', [])
                 job.url = url;
               }
             });
-
-            deferred.resolve(view);
+            return view;
           });
         } else {
-          deferred.resolve(jobMapping(data));
+          return jobMapping(data);
         }
-      }).error(function () {
-        deferred.resolve(defaultJobData(url, 'Unreachable'));
+      }).catch(function () {
+        return defaultJobData(url, 'Unreachable');
       });
-      return deferred.promise;
     }
   })
   .service('buildWatcher', function ($rootScope, $interval, Jobs, buildNotifier) {
