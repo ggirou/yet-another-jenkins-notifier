@@ -130,6 +130,7 @@ angular.module('jenkins.notifier', [])
     $httpProvider.defaults.cache = false;
   })
   .service('jenkins', function ($http, $q, defaultJobData) {
+    var xmlParser = new DOMParser();
     var viewUrlRegExp = /^http:\/\/[^/]+\/(view\/[^/]+\/)?$/;
     var buildingRegExp = /_anime$/;
     var colorToClass = {
@@ -175,13 +176,11 @@ angular.module('jenkins.notifier', [])
           };
 
           return $http.get(url + 'cc.xml').then(function (res) {
-            // Hacky way to parse xml!
-            var projects = angular.element(res.data).find("project");
+            var projects = xmlParser.parseFromString(res.data, "text/xml").getElementsByTagName("Project");
             angular.forEach(projects, function (project) {
-              project = angular.element(project);
-              var name = project.attr("name");
-              var url = project.attr("webUrl");
-              var lastBuildNumber = project.attr("lastBuildLabel");
+              var name = project.attributes["name"].value;
+              var url = project.attributes["webUrl"].value;
+              var lastBuildNumber = project.attributes["lastBuildLabel"].value;
 
               var job = view.jobs[name];
               if (job && !job.lastBuildNumber) {
