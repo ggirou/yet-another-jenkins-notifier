@@ -355,7 +355,7 @@
       when: Promise.resolve
     };
     var $http = {
-      get: function(url) {
+      get: function (url) {
         return fetch(url, {
           credentials: "include"
         });
@@ -383,15 +383,21 @@
     var optionsLink = document.getElementById('optionsLink');
     var urlForm = document.getElementById('urlForm');
     var urlInput = document.getElementById('url');
+    var addButton = document.getElementById('addButton');
+    var errorMessage = document.getElementById('errorMessage');
 
     optionsLink.addEventListener('click', openOptionsPage);
     urlForm.addEventListener("submit", addUrl);
+    urlForm.addEventListener("input", validateForm);
+
+    validateForm();
 
     function openOptionsPage() {
       chrome.runtime.openOptionsPage(); // Chrome 42+
     }
 
     function addUrl() {
+      // TODO: test if urlInput is valid ?
       var url = urlInput.value;
       Jobs.add(url).then(function () {
         urlInput.value = "";
@@ -400,6 +406,15 @@
       });
     }
 
+    function validateForm() {
+      var isFormInvalid = !urlForm.checkValidity();
+      var isUrlInvalid = !urlInput.validity.typeMismatch;
+
+      addButton.disabled = isFormInvalid;
+      urlForm.classList.toggle('has-error', isFormInvalid && urlInput.value);
+      errorMessage.classList.toggle('hidden', isUrlInvalid);
+      errorMessage.innerText = urlInput.validationMessage;
+    }
   }
 
   // TODO: don't run this in background page : extract function services in another file

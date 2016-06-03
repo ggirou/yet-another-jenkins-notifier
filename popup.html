@@ -19,18 +19,18 @@
   </h2>
   <hr>
   <form id="urlForm" name="urlForm" class="form-inline">
-    <div class="form-group" ng-class="{'has-error': urlForm.url.$invalid && !urlForm.url.$pristine}">
+    <div class="form-group">
       <div class="input-group">
         <label class="input-group-addon" for="url">Url</label>
-        <input type="url" class="form-control" id="url" name="url" ng-model="url"
+        <input type="url" class="form-control" id="url" name="url"
                autofocus tabindex="1" placeholder="{{placholderUrl}}" required>
-                <span class="input-group-btn">
-                    <button type="submit" class="btn btn-primary" ng-disabled="urlForm.$invalid">
-                        <span class="glyphicon glyphicon-plus"></span>
-                    </button>
-                </span>
+        <span class="input-group-btn">
+          <button id="addButton" type="submit" class="btn btn-primary">
+            <span class="glyphicon glyphicon-plus"></span>
+          </button>
+        </span>
       </div>
-      <div ng-if="urlForm.url.$error.url" class="help-block">Not a URL</div>
+      <div id="errorMessage" class="help-block"></div>
     </div>
   </form>
 </section>
