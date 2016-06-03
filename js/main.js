@@ -20,17 +20,6 @@
   "use strict";
 
   function JobListController($scope, $interval, Jobs, buildNotifier) {
-    var placeholderUrls = [
-      "http://jenkins/ for all jobs",
-      "http://jenkins/job/my_job/ for one job",
-      "http://jenkins/job/my_view/ for view jobs"
-    ];
-    var i = 0;
-    $scope.placholderUrl = placeholderUrls[0];
-    $interval(function () {
-      $scope.placholderUrl = placeholderUrls[++i % placeholderUrls.length];
-    }, 5000);
-
     $scope.$on('Jobs::jobs.initialized', function () {
       Jobs.updateAllStatus().then(buildNotifier);
     });
@@ -391,6 +380,7 @@
     urlForm.addEventListener("input", validateForm);
 
     validateForm();
+    placeholderRotate();
 
     function openOptionsPage() {
       chrome.runtime.openOptionsPage(); // Chrome 42+
@@ -414,6 +404,20 @@
       urlForm.classList.toggle('has-error', isFormInvalid && urlInput.value);
       errorMessage.classList.toggle('hidden', isUrlInvalid);
       errorMessage.innerText = urlInput.validationMessage;
+    }
+
+    function placeholderRotate() {
+      var placeholderUrls = [
+        "http://jenkins/ for all jobs",
+        "http://jenkins/job/my_job/ for one job",
+        "http://jenkins/job/my_view/ for view jobs"
+      ];
+
+      var i = 0;
+      urlInput.placeholder = placeholderUrls[0];
+      window.setInterval(function () {
+        urlInput.placeholder = placeholderUrls[++i % placeholderUrls.length];
+      }, 5000);
     }
   }
 
