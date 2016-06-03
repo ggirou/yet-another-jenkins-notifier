@@ -19,7 +19,7 @@
 (function () {
   "use strict";
 
-  angular.module('jenkins.notifier').run(function ($rootScope, $q, Jobs, buildWatcher) {
+  function backgroundNotifier($rootScope, $q, Jobs, buildWatcher) {
     $rootScope.$on('Jobs::jobs.initialized', function () {
       Jobs.updateAllStatus().then($q.all).then(buildWatcher);
     });
@@ -40,7 +40,9 @@
       chrome.browserAction.setBadgeText({text: count.toString()});
       chrome.browserAction.setBadgeBackgroundColor({color: color});
     });
-  });
+  }
+
+  angular.module('jenkins.notifier').run(backgroundNotifier);
 
   angular.bootstrap(document, ['jenkins.notifier']);
 })();
