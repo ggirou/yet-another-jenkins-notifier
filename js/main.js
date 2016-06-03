@@ -19,7 +19,7 @@
 (function () {
   "use strict";
 
-  function JobListController($scope, $interval, Runtime, Jobs, buildNotifier) {
+  function JobListController($scope, $interval, Jobs, buildNotifier) {
     var placeholderUrls = [
       "http://jenkins/ for all jobs",
       "http://jenkins/job/my_job/ for one job",
@@ -47,8 +47,6 @@
     };
 
     $scope.remove = Jobs.remove;
-
-    $scope.openOptionsPage = Runtime.openOptionsPage;
   }
 
   // Initialize options and listen for changes
@@ -333,19 +331,8 @@
     };
   }
 
-  function Runtime($window) {
-    return {
-      openOptionsPage: function () {
-        var runtime = chrome.runtime;
-        if (runtime.openOptionsPage) {
-          // New way to open options pages, if supported (Chrome 42+).
-          runtime.openOptionsPage();
-        } else {
-          // Reasonable fallback.
-          $window.open(runtime.getURL('options.html'));
-        }
-      }
-    };
+  function openOptionsPage() {
+    chrome.runtime.openOptionsPage(); // Chrome 42+
   }
 
   angular.module('jenkins.notifier', [])
@@ -365,6 +352,12 @@
       return decodeURI;
     })
     .service('Storage', Storage)
-    .service('Notification', Notification)
-    .service('Runtime', Runtime);
+    .service('Notification', Notification);
+
+  function documentReady() {
+    var optionsLink = document.getElementById('optionsLink');
+    optionsLink.addEventListener('click', openOptionsPage);
+  }
+
+  document.addEventListener('DOMContentLoaded', documentReady);
 })();
