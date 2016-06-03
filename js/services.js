@@ -123,7 +123,7 @@ var Services = (function () {
     return Jobs;
   }
 
-  function jenkinsService($http, defaultJobData) {
+  function jenkinsService(defaultJobData) {
     var xmlParser = new DOMParser();
     var viewUrlRegExp = /^http:\/\/[^/]+\/(view\/[^/]+\/)?$/;
     var buildingRegExp = /_anime$/;
@@ -137,6 +137,9 @@ var Services = (function () {
       aborted: 'Aborted',
       notbuilt: 'Not built',
       disabled: 'Disabled'
+    };
+    var fetchOptions = {
+      credentials: 'include'
     };
 
     function jobMapping(data) {
@@ -155,14 +158,17 @@ var Services = (function () {
     return function (url) {
       url = url.charAt(url.length - 1) === '/' ? url : url + '/';
 
-      return $http.get(url + 'api/json/').then(function (res) {
-        var data = res.data;
+      return fetch(url + 'api/json/', fetchOptions).then(function (res) {
+        return res.ok ? res.json() : Promise.reject(res);
+      }).then(function (data) {
         if (viewUrlRegExp.test(url)) {
           var view = {
             isView: true,
             name: data.name || data.nodeName || 'All jobs',
             url: data.url || url,
             building: false,
+            status: '',
+            statusClass: '',
             jobs: data.jobs.reduce(function (jobs, data) {
               var job = jobMapping(data);
               jobs[job.name] = job;
@@ -170,8 +176,10 @@ var Services = (function () {
             }, {})
           };
 
-          return $http.get(url + 'cc.xml').then(function (res) {
-            var projects = xmlParser.parseFromString(res.data, 'text/xml').getElementsByTagName('Project');
+          return fetch(url + 'cc.xml', fetchOptions).then(function (res) {
+            return res.ok ? res.text() : Promise.reject(res);
+          }).then(function (text) {
+            var projects = xmlParser.parseFromString(text, 'text/xml').getElementsByTagName('Project');
             _.forEach(projects, function (project) {
               var name = project.attributes['name'].value;
               var url = project.attributes['webUrl'].value;
@@ -194,21 +202,21 @@ var Services = (function () {
     }
   }
 
-  function buildWatcherService($rootScope, $interval, Jobs, buildNotifier) {
+  function buildWatcherService($rootScope, Jobs, buildNotifier) {
     function runUpdateAndNotify(options) {
       if (options.notification === 'none')
         return;
 
-      return $interval(function (Jobs, buildNotifier) {
+      return window.setInterval(function (Jobs, buildNotifier) {
         Jobs.updateAllStatus().then(buildNotifier);
-      }, options.refreshTime * 1000, 0, false, Jobs, buildNotifier);
+      }, options.refreshTime * 1000, Jobs, buildNotifier);
     }
 
     return function () {
       var currentInterval = runUpdateAndNotify($rootScope.options);
 
       $rootScope.$on('Options::options.changed', function (_, options) {
-        $interval.cancel(currentInterval);
+        window.clearInterval(currentInterval);
         currentInterval = runUpdateAndNotify(options);
       });
     };
@@ -324,26 +332,6 @@ var Services = (function () {
     };
   }
 
-  if (typeof angular !== 'undefined') {
-    angular.module('jenkins.notifier', [])
-      .run(initOptions)
-      .run(initJobs)
-      .service('defaultJobData', defaultJobDataService)
-      .service('Jobs', JobsService)
-      .config(function ($httpProvider) {
-        $httpProvider.useApplyAsync(true);
-        $httpProvider.defaults.cache = false;
-      })
-      .service('jenkins', jenkinsService)
-      .service('buildWatcher', buildWatcherService)
-      .service('buildNotifier', buildNotifierService)
-      .filter('decodeURI', function () {
-        return decodeURI;
-      })
-      .service('Storage', StorageService)
-      .service('Notification', NotificationService);
-  }
-
   var $rootScope = {
     $broadcast: function (name, detail) {
       window.dispatchEvent(new CustomEvent(name, {detail: detail}));
@@ -365,21 +353,18 @@ var Services = (function () {
     },
     when: function (value) {
       return Promise.resolve(value);
-    }
-  };
-  var $http = {
-    get: function (url) {
-      return fetch(url, {
-        credentials: 'include'
-      });
+    },
+    all: function (iterable) {
+      return Promise.all(iterable);
     }
   };
   var Storage = StorageService($q);
   var defaultJobData = defaultJobDataService();
-  var jenkins = jenkinsService($http, defaultJobData);
+  var jenkins = jenkinsService(defaultJobData);
   var Jobs = JobsService($q, Storage, jenkins, defaultJobData);
   var Notification = NotificationService($q);
   var buildNotifier = buildNotifierService($rootScope, Notification);
+  var buildWatcher = buildWatcherService($rootScope, Jobs, buildNotifier);
 
   initOptions($rootScope, Storage);
   initJobs(Jobs, Storage, $rootScope);
@@ -391,6 +376,7 @@ var Services = (function () {
     Storage: Storage,
     Jobs: Jobs,
     Notification: Notification,
-    buildNotifier: buildNotifier
+    buildNotifier: buildNotifier,
+    buildWatcher: buildWatcher
   };
 })();

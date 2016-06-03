@@ -19,15 +19,20 @@
 (function () {
   "use strict";
 
-  function backgroundNotifier($rootScope, $q, Jobs, buildWatcher) {
+  function backgroundNotifier() {
+    var $rootScope = Services.$rootScope;
+    var Jobs = Services.Jobs;
+    var $q = Services.$q;
+    var _ = Services._;
+
     $rootScope.$on('Jobs::jobs.initialized', function () {
-      Jobs.updateAllStatus().then($q.all).then(buildWatcher);
+      Jobs.updateAllStatus().then($q.all).then(Services.buildWatcher);
     });
-    $rootScope.$on('Jobs::jobs.changed', function (_, jobs) {
+    $rootScope.$on('Jobs::jobs.changed', function (event, jobs) {
       var counts = {};
-      angular.forEach(jobs, function (data) {
+      _.forEach(jobs, function (data) {
         if (data.isView) {
-          angular.forEach(data.jobs, function (viewJob) {
+          _.forEach(data.jobs, function (viewJob) {
             counts[viewJob.status] = (counts[viewJob.status] || 0) + 1;
           });
         } else {
@@ -42,7 +47,5 @@
     });
   }
 
-  angular.module('jenkins.notifier').run(backgroundNotifier);
-
-  angular.bootstrap(document, ['jenkins.notifier']);
+  document.addEventListener('DOMContentLoaded', backgroundNotifier);
 })();
