@@ -17,18 +17,28 @@
  */
 
 (function () {
-  "use strict";
+  'use strict';
 
-  function JobListController($scope, $interval, Jobs, buildNotifier) {
-    $scope.$on('Jobs::jobs.initialized', function () {
-      Jobs.updateAllStatus().then(buildNotifier);
-    });
-    $scope.$on('Jobs::jobs.changed', function (_, jobs) {
-      $scope.jobs = jobs;
-    });
-
-    $scope.remove = Jobs.remove;
-  }
+  var _ = {
+    forEach: function (obj, iterator) {
+      if (obj) {
+        if (obj.forEach) {
+          obj.forEach(iterator);
+        } else if ('length' in obj && obj.length > 0) {
+          for (var i = 0; i < obj.length; i++) {
+            iterator(obj[i], i);
+          }
+        } else {
+          for (var key in obj) {
+            if (obj.hasOwnProperty(key)) {
+              iterator(obj[key], key);
+            }
+          }
+        }
+      }
+      return obj;
+    }
+  };
 
   // Initialize options and listen for changes
   function initOptions($rootScope, Storage) {
@@ -72,9 +82,10 @@
     return function (url, status) {
       var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
       return {
-        name: decodeURI(url.replace(jobNameRegExp, "$1")),
+        name: decodeURI(url.replace(jobNameRegExp, '$1')),
         url: url,
         status: status,
+        building: false,
         lastBuild: {}
       };
     }
@@ -102,7 +113,7 @@
       },
       updateAllStatus: function () {
         var promises = [];
-        angular.forEach(Jobs.jobs, function (_, url) {
+        _.forEach(Jobs.jobs, function (_, url) {
           promises.push(Jobs.updateStatus(url));
         });
         return $q.when(promises);
@@ -129,7 +140,7 @@
     };
 
     function jobMapping(data) {
-      var basicColor = (data.color || "").replace(buildingRegExp, '');
+      var basicColor = (data.color || '').replace(buildingRegExp, '');
       var lastBuild = data.lastCompletedBuild || {};
       return {
         name: data.displayName || data.name,
@@ -137,7 +148,7 @@
         building: buildingRegExp.test(data.color),
         status: status[basicColor] || basicColor,
         statusClass: colorToClass[basicColor],
-        lastBuildNumber: lastBuild.number || ""
+        lastBuildNumber: lastBuild.number || ''
       };
     }
 
@@ -149,8 +160,9 @@
         if (viewUrlRegExp.test(url)) {
           var view = {
             isView: true,
-            name: data.name || data.nodeName || "All jobs",
+            name: data.name || data.nodeName || 'All jobs',
             url: data.url || url,
+            building: false,
             jobs: data.jobs.reduce(function (jobs, data) {
               var job = jobMapping(data);
               jobs[job.name] = job;
@@ -159,11 +171,11 @@
           };
 
           return $http.get(url + 'cc.xml').then(function (res) {
-            var projects = xmlParser.parseFromString(res.data, "text/xml").getElementsByTagName("Project");
-            angular.forEach(projects, function (project) {
-              var name = project.attributes["name"].value;
-              var url = project.attributes["webUrl"].value;
-              var lastBuildNumber = project.attributes["lastBuildLabel"].value;
+            var projects = xmlParser.parseFromString(res.data, 'text/xml').getElementsByTagName('Project');
+            _.forEach(projects, function (project) {
+              var name = project.attributes['name'].value;
+              var url = project.attributes['webUrl'].value;
+              var lastBuildNumber = project.attributes['lastBuildLabel'].value;
 
               var job = view.jobs[name];
               if (job && !job.lastBuildNumber) {
@@ -208,20 +220,20 @@
       if (oldValue.lastBuildNumber == newValue.lastBuildNumber)
         return;
 
-      var title = "Build " + newValue.status + "!";
+      var title = 'Build ' + newValue.status + '!';
       if ($rootScope.options.notification === 'unstable' && newValue.status === 'Success' && newValue.lastBuildNumber > 1) {
         if (oldValue.status === 'Success') {
           return;
         } else {
-          title = "Build back to stable!";
+          title = 'Build back to stable!';
         }
       }
 
       Notification.create(null, {
-          type: "basic",
-          title: title + " - " + newValue.name,
+          type: 'basic',
+          title: title + ' - ' + newValue.name,
           message: decodeURI(newValue.url + newValue.lastBuildNumber),
-          iconUrl: "img/logo.svg"
+          iconUrl: 'img/logo.svg'
         },
         {
           onClicked: function () {
@@ -242,7 +254,7 @@
           var newValue = data.newValue;
 
           if (newValue.isView) {
-            angular.forEach(newValue.jobs, function (job, name) {
+            _.forEach(newValue.jobs, function (job, name) {
               jobNotifier(job, oldValue && oldValue.jobs && oldValue.jobs[name]);
             });
           } else {
@@ -287,14 +299,14 @@
 
     notifications.onClicked.addListener(function (notificationId) {
       var listener = Listeners[notificationId] || {};
-      if (angular.isFunction(listener.onClicked)) {
+      if (typeof listener.onClicked === 'function') {
         listener.onClicked();
       }
     });
 
     notifications.onClosed.addListener(function (notificationId) {
       var listener = Listeners[notificationId] || {};
-      if (angular.isFunction(listener.onClosed)) {
+      if (typeof listener.onClosed === 'function') {
         listener.onClosed();
       }
       delete Listeners[notificationId];
@@ -312,26 +324,37 @@
     };
   }
 
-  angular.module('jenkins.notifier', [])
-    .controller('JobListController', JobListController)
-    .run(initOptions)
-    .run(initJobs)
-    .service('defaultJobData', defaultJobDataService)
-    .service('Jobs', JobsService)
-    .config(function ($httpProvider) {
-      $httpProvider.useApplyAsync(true);
-      $httpProvider.defaults.cache = false;
-    })
-    .service('jenkins', jenkinsService)
-    .service('buildWatcher', buildWatcherService)
-    .service('buildNotifier', buildNotifierService)
-    .filter('decodeURI', function () {
-      return decodeURI;
-    })
-    .service('Storage', StorageService)
-    .service('Notification', NotificationService);
+  if (typeof angular !== 'undefined') {
+    angular.module('jenkins.notifier', [])
+      .run(initOptions)
+      .run(initJobs)
+      .service('defaultJobData', defaultJobDataService)
+      .service('Jobs', JobsService)
+      .config(function ($httpProvider) {
+        $httpProvider.useApplyAsync(true);
+        $httpProvider.defaults.cache = false;
+      })
+      .service('jenkins', jenkinsService)
+      .service('buildWatcher', buildWatcherService)
+      .service('buildNotifier', buildNotifierService)
+      .filter('decodeURI', function () {
+        return decodeURI;
+      })
+      .service('Storage', StorageService)
+      .service('Notification', NotificationService);
+  }
 
   function initServices() {
+    var $rootScope = {
+      $broadcast: function (name, detail) {
+        window.dispatchEvent(new CustomEvent(name, {detail: detail}));
+      },
+      $on: function (name, callback) {
+        window.addEventListener(name, function (e) {
+          callback(e, e.detail);
+        });
+      }
+    };
     var $q = {
       defer: function () {
         var defer = {};
@@ -341,12 +364,14 @@
         });
         return defer;
       },
-      when: Promise.resolve
+      when: function (value) {
+        return Promise.resolve(value);
+      }
     };
     var $http = {
       get: function (url) {
         return fetch(url, {
-          credentials: "include"
+          credentials: 'include'
         });
       }
     };
@@ -354,20 +379,37 @@
     var defaultJobData = defaultJobDataService();
     var jenkins = jenkinsService($http, defaultJobData);
     var Jobs = JobsService($q, Storage, jenkins, defaultJobData);
+    var Notification = NotificationService($q);
+    var buildNotifier = buildNotifierService($rootScope, Notification);
 
     return {
+      $rootScope: $rootScope,
       $q: $q,
       $http: $http,
       Storage: Storage,
       defaultJobData: defaultJobData,
       jenkins: jenkins,
-      Jobs: Jobs
+      Jobs: Jobs,
+      Notification: Notification,
+      buildNotifier: buildNotifier
     };
   }
 
   function documentReady() {
     var Services = initServices();
     var Jobs = Services.Jobs;
+    var $rootScope = Services.$rootScope;
+
+    initOptions($rootScope, Services.Storage);
+    initJobs(Jobs, Services.Storage, $rootScope);
+
+    $rootScope.$on('Jobs::jobs.initialized', function () {
+      Jobs.updateAllStatus().then(Services.buildNotifier);
+    });
+    $rootScope.$on('Jobs::jobs.changed', function (_, jobs) {
+      console.log('Jobs::jobs.changed');
+      renderJobs(jobs);
+    });
 
     var optionsLink = document.getElementById('optionsLink');
     var urlForm = document.getElementById('urlForm');
@@ -376,8 +418,8 @@
     var errorMessage = document.getElementById('errorMessage');
 
     optionsLink.addEventListener('click', openOptionsPage);
-    urlForm.addEventListener("submit", addUrl);
-    urlForm.addEventListener("input", validateForm);
+    urlForm.addEventListener('submit', addUrl);
+    urlForm.addEventListener('input', validateForm);
 
     validateForm();
     placeholderRotate();
@@ -390,7 +432,7 @@
       // TODO: test if urlInput is valid ?
       var url = urlInput.value;
       Jobs.add(url).then(function () {
-        urlInput.value = "";
+        urlInput.value = '';
       }).then(function () {
         return Jobs.updateStatus(url);
       });
@@ -408,9 +450,9 @@
 
     function placeholderRotate() {
       var placeholderUrls = [
-        "http://jenkins/ for all jobs",
-        "http://jenkins/job/my_job/ for one job",
-        "http://jenkins/job/my_view/ for view jobs"
+        'http://jenkins/ for all jobs',
+        'http://jenkins/job/my_job/ for one job',
+        'http://jenkins/job/my_view/ for view jobs'
       ];
 
       var i = 0;
@@ -419,6 +461,59 @@
         urlInput.placeholder = placeholderUrls[++i % placeholderUrls.length];
       }, 5000);
     }
+
+    var jobList = document.getElementById('jobList');
+    var jobItemTemplate = document.getElementById('jobItemTemplate');
+    var jobSubItemTemplate = document.getElementById('jobSubItemTemplate');
+
+    function removeUrlClick(event) {
+      Jobs.remove(event.currentTarget.dataset.url);
+    }
+
+    function renderJobs(jobs) {
+      renderRepeat(jobList, jobItemTemplate, jobs, renderJobOrView);
+    }
+
+    function renderJobOrView(node, url, job) {
+      renderJob(node, url, job);
+
+      var avatar = node.querySelector('img.avatar');
+      avatar.className = avatar.className.replace(/alert-.+$/, '').replace(/$/, 'alert-' + job.statusClass);
+
+      node.querySelector('[data-id="job.name"]').innerText = job.name;
+
+      var closeButton = node.querySelector('button.close');
+      closeButton.dataset.url = job.url;
+      closeButton.addEventListener('click', removeUrlClick);
+
+      var subJobs = node.querySelector('[data-id="job.jobs"]');
+      subJobs.classList.toggle('hidden', !job.jobs);
+      renderRepeat(subJobs.firstElementChild, jobSubItemTemplate, job.jobs, renderJob);
+    }
+
+    function renderJob(node, url, job) {
+      node.classList.toggle('building', job.building);
+
+      var urlLink = node.querySelector('a[data-id="job.url"]');
+      urlLink.href = job.url;
+      urlLink.innerText = decodeURI(job.url);
+
+      var badge = node.querySelector('.badge');
+      badge.className = badge.className.replace(/alert-.+$/, '').replace(/$/, 'alert-' + job.statusClass);
+      badge.innerText = job.status;
+    }
+
+    function renderRepeat(container, template, obj, render) {
+      var keys = Object.keys(obj || {});
+      for (var i = 0; i < keys.length; i++) {
+        container.appendChild(container.children[i] || document.importNode(template.content, true));
+        render(container.children[i], keys[i], obj[keys[i]]);
+      }
+      for (var j = container.childElementCount - 1; j >= keys.length; j--) {
+        container.children[j].remove();
+      }
+    }
+
   }
 
   // TODO: don't run this in background page : extract function services in another file
