@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-(function () {
+var Services = (function () {
   'use strict';
 
   var _ = {
@@ -344,178 +344,53 @@
       .service('Notification', NotificationService);
   }
 
-  function initServices() {
-    var $rootScope = {
-      $broadcast: function (name, detail) {
-        window.dispatchEvent(new CustomEvent(name, {detail: detail}));
-      },
-      $on: function (name, callback) {
-        window.addEventListener(name, function (e) {
-          callback(e, e.detail);
-        });
-      }
-    };
-    var $q = {
-      defer: function () {
-        var defer = {};
-        defer.promise = new Promise(function (resolve, reject) {
-          defer.resolve = resolve;
-          defer.reject = reject;
-        });
-        return defer;
-      },
-      when: function (value) {
-        return Promise.resolve(value);
-      }
-    };
-    var $http = {
-      get: function (url) {
-        return fetch(url, {
-          credentials: 'include'
-        });
-      }
-    };
-    var Storage = StorageService($q);
-    var defaultJobData = defaultJobDataService();
-    var jenkins = jenkinsService($http, defaultJobData);
-    var Jobs = JobsService($q, Storage, jenkins, defaultJobData);
-    var Notification = NotificationService($q);
-    var buildNotifier = buildNotifierService($rootScope, Notification);
-
-    return {
-      $rootScope: $rootScope,
-      $q: $q,
-      $http: $http,
-      Storage: Storage,
-      defaultJobData: defaultJobData,
-      jenkins: jenkins,
-      Jobs: Jobs,
-      Notification: Notification,
-      buildNotifier: buildNotifier
-    };
-  }
-
-  function documentReady() {
-    var Services = initServices();
-    var Jobs = Services.Jobs;
-    var $rootScope = Services.$rootScope;
-
-    initOptions($rootScope, Services.Storage);
-    initJobs(Jobs, Services.Storage, $rootScope);
-
-    $rootScope.$on('Jobs::jobs.initialized', function () {
-      Jobs.updateAllStatus().then(Services.buildNotifier);
-    });
-    $rootScope.$on('Jobs::jobs.changed', function (_, jobs) {
-      console.log('Jobs::jobs.changed');
-      renderJobs(jobs);
-    });
-
-    var optionsLink = document.getElementById('optionsLink');
-    var urlForm = document.getElementById('urlForm');
-    var urlInput = document.getElementById('url');
-    var addButton = document.getElementById('addButton');
-    var errorMessage = document.getElementById('errorMessage');
-
-    optionsLink.addEventListener('click', openOptionsPage);
-    urlForm.addEventListener('submit', addUrl);
-    urlForm.addEventListener('input', validateForm);
-
-    validateForm();
-    placeholderRotate();
-
-    function openOptionsPage() {
-      chrome.runtime.openOptionsPage(); // Chrome 42+
-    }
-
-    function addUrl() {
-      // TODO: test if urlInput is valid ?
-      var url = urlInput.value;
-      Jobs.add(url).then(function () {
-        urlInput.value = '';
-      }).then(function () {
-        return Jobs.updateStatus(url);
+  var $rootScope = {
+    $broadcast: function (name, detail) {
+      window.dispatchEvent(new CustomEvent(name, {detail: detail}));
+    },
+    $on: function (name, callback) {
+      window.addEventListener(name, function (e) {
+        callback(e, e.detail);
       });
     }
-
-    function validateForm() {
-      var isFormInvalid = !urlForm.checkValidity();
-      var isUrlInvalid = !urlInput.validity.typeMismatch;
-
-      addButton.disabled = isFormInvalid;
-      urlForm.classList.toggle('has-error', isFormInvalid && urlInput.value);
-      errorMessage.classList.toggle('hidden', isUrlInvalid);
-      errorMessage.innerText = urlInput.validationMessage;
+  };
+  var $q = {
+    defer: function () {
+      var defer = {};
+      defer.promise = new Promise(function (resolve, reject) {
+        defer.resolve = resolve;
+        defer.reject = reject;
+      });
+      return defer;
+    },
+    when: function (value) {
+      return Promise.resolve(value);
     }
-
-    function placeholderRotate() {
-      var placeholderUrls = [
-        'http://jenkins/ for all jobs',
-        'http://jenkins/job/my_job/ for one job',
-        'http://jenkins/job/my_view/ for view jobs'
-      ];
-
-      var i = 0;
-      urlInput.placeholder = placeholderUrls[0];
-      window.setInterval(function () {
-        urlInput.placeholder = placeholderUrls[++i % placeholderUrls.length];
-      }, 5000);
+  };
+  var $http = {
+    get: function (url) {
+      return fetch(url, {
+        credentials: 'include'
+      });
     }
+  };
+  var Storage = StorageService($q);
+  var defaultJobData = defaultJobDataService();
+  var jenkins = jenkinsService($http, defaultJobData);
+  var Jobs = JobsService($q, Storage, jenkins, defaultJobData);
+  var Notification = NotificationService($q);
+  var buildNotifier = buildNotifierService($rootScope, Notification);
 
-    var jobList = document.getElementById('jobList');
-    var jobItemTemplate = document.getElementById('jobItemTemplate');
-    var jobSubItemTemplate = document.getElementById('jobSubItemTemplate');
+  initOptions($rootScope, Storage);
+  initJobs(Jobs, Storage, $rootScope);
 
-    function removeUrlClick(event) {
-      Jobs.remove(event.currentTarget.dataset.url);
-    }
-
-    function renderJobs(jobs) {
-      renderRepeat(jobList, jobItemTemplate, jobs, renderJobOrView);
-    }
-
-    function renderJobOrView(node, url, job) {
-      renderJob(node, url, job);
-
-      var avatar = node.querySelector('img.avatar');
-      avatar.className = avatar.className.replace(/alert-.+$/, '').replace(/$/, 'alert-' + job.statusClass);
-
-      node.querySelector('[data-id="job.name"]').innerText = job.name;
-
-      var closeButton = node.querySelector('button.close');
-      closeButton.dataset.url = job.url;
-      closeButton.addEventListener('click', removeUrlClick);
-
-      var subJobs = node.querySelector('[data-id="job.jobs"]');
-      subJobs.classList.toggle('hidden', !job.jobs);
-      renderRepeat(subJobs.firstElementChild, jobSubItemTemplate, job.jobs, renderJob);
-    }
-
-    function renderJob(node, url, job) {
-      node.classList.toggle('building', job.building);
-
-      var urlLink = node.querySelector('a[data-id="job.url"]');
-      urlLink.href = job.url;
-      urlLink.innerText = decodeURI(job.url);
-
-      var badge = node.querySelector('.badge');
-      badge.className = badge.className.replace(/alert-.+$/, '').replace(/$/, 'alert-' + job.statusClass);
-      badge.innerText = job.status;
-    }
-
-    function renderRepeat(container, template, obj, render) {
-      var keys = Object.keys(obj || {});
-      for (var i = 0; i < keys.length; i++) {
-        container.appendChild(container.children[i] || document.importNode(template.content, true));
-        render(container.children[i], keys[i], obj[keys[i]]);
-      }
-      for (var j = container.childElementCount - 1; j >= keys.length; j--) {
-        container.children[j].remove();
-      }
-    }
-
-  }
-
-  // TODO: don't run this in background page : extract function services in another file
-  document.addEventListener('DOMContentLoaded', documentReady);
+  return {
+    _: _,
+    $rootScope: $rootScope,
+    $q: $q,
+    Storage: Storage,
+    Jobs: Jobs,
+    Notification: Notification,
+    buildNotifier: buildNotifier
+  };
 })();
