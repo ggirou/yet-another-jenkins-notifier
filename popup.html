@@ -18,7 +18,7 @@
     <small><a id="optionsLink" href="#"><span class="glyphicon glyphicon-cog"></span></a></small>
   </h2>
   <hr>
-  <form name="urlForm" class="form-inline" ng-submit="add(url)">
+  <form id="urlForm" name="urlForm" class="form-inline">
     <div class="form-group" ng-class="{'has-error': urlForm.url.$invalid && !urlForm.url.$pristine}">
       <div class="input-group">
         <label class="input-group-addon" for="url">Url</label>

@@ -38,14 +38,6 @@
       $scope.jobs = jobs;
     });
 
-    $scope.add = function (url) {
-      Jobs.add(url).then(function () {
-        $scope.url = "";
-      }).then(function () {
-        return Jobs.updateStatus(url);
-      });
-    };
-
     $scope.remove = Jobs.remove;
   }
 
@@ -87,7 +79,7 @@
     });
   }
 
-  function defaultJobData() {
+  function defaultJobDataService() {
     return function (url, status) {
       var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
       return {
@@ -99,7 +91,7 @@
     }
   }
 
-  function Jobs($q, Storage, jenkins, defaultJobData) {
+  function JobsService($q, Storage, jenkins, defaultJobData) {
     var Jobs = {
       jobs: {},
       add: function (url, data) {
@@ -131,7 +123,7 @@
     return Jobs;
   }
 
-  function jenkins($http, defaultJobData) {
+  function jenkinsService($http, defaultJobData) {
     var xmlParser = new DOMParser();
     var viewUrlRegExp = /^http:\/\/[^/]+\/(view\/[^/]+\/)?$/;
     var buildingRegExp = /_anime$/;
@@ -201,7 +193,7 @@
     }
   }
 
-  function buildWatcher($rootScope, $interval, Jobs, buildNotifier) {
+  function buildWatcherService($rootScope, $interval, Jobs, buildNotifier) {
     function runUpdateAndNotify(options) {
       if (options.notification === 'none')
         return;
@@ -221,7 +213,7 @@
     };
   }
 
-  function buildNotifier($rootScope, Notification) {
+  function buildNotifierService($rootScope, Notification) {
     function jobNotifier(newValue, oldValue) {
       oldValue = oldValue || {};
       if (oldValue.lastBuildNumber == newValue.lastBuildNumber)
@@ -272,7 +264,7 @@
     };
   }
 
-  function Storage($q) {
+  function StorageService($q) {
     var storage = chrome.storage.local;
 
     function promisedCallback(deferred) {
@@ -300,7 +292,7 @@
     };
   }
 
-  function Notification($q) {
+  function NotificationService($q) {
     var notifications = chrome.notifications;
     var Listeners = {};
 
@@ -331,33 +323,85 @@
     };
   }
 
-  function openOptionsPage() {
-    chrome.runtime.openOptionsPage(); // Chrome 42+
-  }
-
   angular.module('jenkins.notifier', [])
     .controller('JobListController', JobListController)
     .run(initOptions)
     .run(initJobs)
-    .service('defaultJobData', defaultJobData)
-    .service('Jobs', Jobs)
+    .service('defaultJobData', defaultJobDataService)
+    .service('Jobs', JobsService)
     .config(function ($httpProvider) {
       $httpProvider.useApplyAsync(true);
       $httpProvider.defaults.cache = false;
     })
-    .service('jenkins', jenkins)
-    .service('buildWatcher', buildWatcher)
-    .service('buildNotifier', buildNotifier)
+    .service('jenkins', jenkinsService)
+    .service('buildWatcher', buildWatcherService)
+    .service('buildNotifier', buildNotifierService)
     .filter('decodeURI', function () {
       return decodeURI;
     })
-    .service('Storage', Storage)
-    .service('Notification', Notification);
+    .service('Storage', StorageService)
+    .service('Notification', NotificationService);
 
-  function documentReady() {
-    var optionsLink = document.getElementById('optionsLink');
-    optionsLink.addEventListener('click', openOptionsPage);
+  function initServices() {
+    var $q = {
+      defer: function () {
+        var defer = {};
+        defer.promise = new Promise(function (resolve, reject) {
+          defer.resolve = resolve;
+          defer.reject = reject;
+        });
+        return defer;
+      },
+      when: Promise.resolve
+    };
+    var $http = {
+      get: function(url) {
+        return fetch(url, {
+          credentials: "include"
+        });
+      }
+    };
+    var Storage = StorageService($q);
+    var defaultJobData = defaultJobDataService();
+    var jenkins = jenkinsService($http, defaultJobData);
+    var Jobs = JobsService($q, Storage, jenkins, defaultJobData);
+
+    return {
+      $q: $q,
+      $http: $http,
+      Storage: Storage,
+      defaultJobData: defaultJobData,
+      jenkins: jenkins,
+      Jobs: Jobs
+    };
   }
 
+  function documentReady() {
+    var Services = initServices();
+    var Jobs = Services.Jobs;
+
+    var optionsLink = document.getElementById('optionsLink');
+    var urlForm = document.getElementById('urlForm');
+    var urlInput = document.getElementById('url');
+
+    optionsLink.addEventListener('click', openOptionsPage);
+    urlForm.addEventListener("submit", addUrl);
+
+    function openOptionsPage() {
+      chrome.runtime.openOptionsPage(); // Chrome 42+
+    }
+
+    function addUrl() {
+      var url = urlInput.value;
+      Jobs.add(url).then(function () {
+        urlInput.value = "";
+      }).then(function () {
+        return Jobs.updateStatus(url);
+      });
+    }
+
+  }
+
+  // TODO: don't run this in background page : extract function services in another file
   document.addEventListener('DOMContentLoaded', documentReady);
 })();
