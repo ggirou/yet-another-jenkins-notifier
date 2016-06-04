@@ -12,6 +12,7 @@ cp -r css fonts img js LICENSE manifest.json *.html dist/firefox
 rm dist/firefox/js/ga.js
 sed -i '' '/"author"/d' dist/firefox/manifest.json
 sed -i '' '/"minimum_chrome_version"/d' dist/firefox/manifest.json
+sed -i '' '/"content_security_policy"/d' dist/firefox/manifest.json
 sed -i '' 's/, "js\/ga.js"//' dist/firefox/manifest.json
 sed -i '' '/ data-no-firefox/d' dist/firefox/*.html
 
