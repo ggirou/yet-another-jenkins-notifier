@@ -83,7 +83,7 @@ var Services = (function () {
       var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
       return {
         name: decodeURI(url.replace(jobNameRegExp, '$1')),
-        url: url,
+        url: decodeURI(url),
         status: status,
         building: false,
         lastBuild: {}
@@ -147,7 +147,7 @@ var Services = (function () {
       var lastBuild = data.lastCompletedBuild || {};
       return {
         name: data.displayName || data.name,
-        url: data.url,
+        url: decodeURI(data.url),
         building: buildingRegExp.test(data.color),
         status: status[basicColor] || basicColor,
         statusClass: colorToClass[basicColor],
@@ -165,7 +165,7 @@ var Services = (function () {
           var view = {
             isView: true,
             name: data.name || data.nodeName || 'All jobs',
-            url: data.url || url,
+            url: decodeURI(data.url || url),
             building: false,
             status: '',
             statusClass: '',
@@ -188,7 +188,7 @@ var Services = (function () {
               var job = view.jobs[name];
               if (job && !job.lastBuildNumber) {
                 job.lastBuildNumber = lastBuildNumber;
-                job.url = url;
+                job.url = decodeURI(url);
               }
             });
             return view;
@@ -237,15 +237,16 @@ var Services = (function () {
         }
       }
 
+      var buildUrl = newValue.url + newValue.lastBuildNumber;
       Notification.create(null, {
           type: 'basic',
           title: title + ' - ' + newValue.name,
-          message: decodeURI(newValue.url + newValue.lastBuildNumber),
+          message: buildUrl,
           iconUrl: 'img/logo.svg'
         },
         {
           onClicked: function () {
-            window.open(newValue.url + newValue.lastBuildNumber);
+            window.open(buildUrl);
           }
         }
       );

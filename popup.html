@@ -44,14 +44,14 @@
     <div class="list-group-item">
       <div class="row">
         <div class="col-xs-2">
-          <img class="img-rounded avatar alert-{{job.statusClass}}" alt="Jenkins" src="img/icon48.png">
+          <img data-jobstatusclass class="img-rounded avatar" alt="Jenkins" src="img/icon48.png">
         </div>
         <div class="col-xs-8">
           <div class="job-title no-margin inline-block">
             <h4>
-              <span data-id="job.name"><!--job.name--></span>
+              <span data-jobfield="name"><!--name--></span>
               <br>
-              <a data-id="job.url" class="small" target="_blank"><!--job.url--></a>
+              <a data-jobfield="url" class="small" target="_blank"><!--url--></a>
             </h4>
           </div>
         </div>
@@ -59,15 +59,13 @@
           <div class="pull-right">
             <button type="button" class="close" aria-label="Close"><span
               aria-hidden="true">&times;</span></button>
-            <p class="badge alert-{{job.statusClass}}"><!--job.status--></p>
+            <p data-jobfield="status" data-jobstatusclass class="badge"><!--status--></p>
           </div>
         </div>
       </div>
-      <div data-id="job.jobs">
-        <ul class="list-unstyled">
-
-        </ul>
-      </div>
+      <ul data-id="jobs" class="list-unstyled">
+        <!--View jobs-->
+      </ul>
     </div>
   </template>
 
@@ -75,11 +73,11 @@
     <li class="row">
       <div class="col-xs-offset-2 col-xs-8">
         <div class="job-title">
-          <a data-id="job.url" target="_blank"></a>
+          <a data-jobfield="name" target="_blank"><!--name--></a>
         </div>
       </div>
       <div class="col-xs-2">
-        <span class="pull-right badge alert-{{job.statusClass}}"></span>
+        <span data-jobfield="status" data-jobstatusclass class="pull-right badge"><!--status--></span>
       </div>
     </li>
   </template>

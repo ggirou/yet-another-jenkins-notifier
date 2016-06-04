@@ -22,6 +22,7 @@
   function documentReady() {
     Services.init();
 
+    var _ = Services._;
     var Jobs = Services.Jobs;
 
     var $rootScope = Services.$rootScope;
@@ -99,30 +100,28 @@
     function renderJobOrView(node, url, job) {
       renderJob(node, url, job);
 
-      var avatar = node.querySelector('img.avatar');
-      avatar.className = avatar.className.replace(/alert-.*$/, '').replace(/$/, 'alert-' + job.statusClass);
-
-      node.querySelector('[data-id="job.name"]').innerText = job.name;
-
       var closeButton = node.querySelector('button.close');
       closeButton.dataset.url = job.url;
       closeButton.addEventListener('click', removeUrlClick);
 
-      var subJobs = node.querySelector('[data-id="job.jobs"]');
+      var subJobs = node.querySelector('[data-id="jobs"]');
       subJobs.classList.toggle('hidden', !job.jobs);
-      renderRepeat(subJobs.firstElementChild, jobSubItemTemplate, job.jobs, renderJob);
+      renderRepeat(subJobs, jobSubItemTemplate, job.jobs, renderJob);
     }
 
     function renderJob(node, url, job) {
       node.classList.toggle('building', job.building);
 
-      var urlLink = node.querySelector('a[data-id="job.url"]');
-      urlLink.href = job.url;
-      urlLink.innerText = decodeURI(job.url);
+      _.forEach(node.querySelectorAll('[data-jobfield]'), function (el) {
+        el.innerText = job[el.dataset.jobfield];
+      });
 
-      var badge = node.querySelector('.badge');
-      badge.className = badge.className.replace(/alert-.*$/, '').replace(/$/, 'alert-' + job.statusClass);
-      badge.innerText = job.status;
+      _.forEach(node.querySelectorAll('[data-jobstatusclass]'), function (el) {
+        el.className = el.className.replace(/ alert-.*$/, '').replace(/ ?$/, ' alert-' + job.statusClass);
+      });
+
+      var urlLink = node.querySelector('a');
+      urlLink.href = job.url;
     }
 
     function renderRepeat(container, template, obj, render) {
