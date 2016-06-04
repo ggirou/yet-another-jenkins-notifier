@@ -19,35 +19,31 @@
 (function () {
   "use strict";
 
-  function backgroundNotifier() {
-    Services.init();
+  Services.init();
 
-    var $rootScope = Services.$rootScope;
-    var Jobs = Services.Jobs;
-    var $q = Services.$q;
-    var _ = Services._;
+  var $rootScope = Services.$rootScope;
+  var Jobs = Services.Jobs;
+  var $q = Services.$q;
+  var _ = Services._;
 
-    $rootScope.$on('Jobs::jobs.initialized', function () {
-      Jobs.updateAllStatus().then($q.all).then(Services.buildWatcher);
+  $rootScope.$on('Jobs::jobs.initialized', function () {
+    Jobs.updateAllStatus().then($q.all).then(Services.buildWatcher);
+  });
+  $rootScope.$on('Jobs::jobs.changed', function (event, jobs) {
+    var counts = {};
+    _.forEach(jobs, function (data) {
+      if (data.isView) {
+        _.forEach(data.jobs, function (viewJob) {
+          counts[viewJob.status] = (counts[viewJob.status] || 0) + 1;
+        });
+      } else {
+        counts[data.status] = (counts[data.status] || 0) + 1;
+      }
     });
-    $rootScope.$on('Jobs::jobs.changed', function (event, jobs) {
-      var counts = {};
-      _.forEach(jobs, function (data) {
-        if (data.isView) {
-          _.forEach(data.jobs, function (viewJob) {
-            counts[viewJob.status] = (counts[viewJob.status] || 0) + 1;
-          });
-        } else {
-          counts[data.status] = (counts[data.status] || 0) + 1;
-        }
-      });
 
-      var count = counts.Failure || counts.Unstable || counts.Success || 0;
-      var color = counts.Failure ? '#c9302c' : counts.Unstable ? '#f0ad4e' : '#5cb85c';
-      chrome.browserAction.setBadgeText({text: count.toString()});
-      chrome.browserAction.setBadgeBackgroundColor({color: color});
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', backgroundNotifier);
+    var count = counts.Failure || counts.Unstable || counts.Success || 0;
+    var color = counts.Failure ? '#c9302c' : counts.Unstable ? '#f0ad4e' : '#5cb85c';
+    chrome.browserAction.setBadgeText({text: count.toString()});
+    chrome.browserAction.setBadgeBackgroundColor({color: color});
+  });
 })();
