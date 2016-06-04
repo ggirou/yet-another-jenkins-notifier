@@ -20,6 +20,8 @@
   'use strict';
 
   function documentReady() {
+    Services.init();
+    
     var Jobs = Services.Jobs;
 
     var $rootScope = Services.$rootScope;
@@ -27,7 +29,6 @@
       Jobs.updateAllStatus().then(Services.buildNotifier);
     });
     $rootScope.$on('Jobs::jobs.changed', function (_, jobs) {
-      console.log('Jobs::jobs.changed');
       renderJobs(jobs);
     });
 
@@ -48,7 +49,9 @@
       chrome.runtime.openOptionsPage(); // Chrome 42+
     }
 
-    function addUrl() {
+    function addUrl(event) {
+      event.preventDefault();
+
       var url = urlInput.value;
       Jobs.add(url).then(function () {
         urlInput.value = '';

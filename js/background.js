@@ -20,6 +20,8 @@
   "use strict";
 
   function backgroundNotifier() {
+    Services.init();
+
     var $rootScope = Services.$rootScope;
     var Jobs = Services.Jobs;
     var $q = Services.$q;

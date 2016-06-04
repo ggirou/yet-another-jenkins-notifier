@@ -366,9 +366,6 @@ var Services = (function () {
   var buildNotifier = buildNotifierService($rootScope, Notification);
   var buildWatcher = buildWatcherService($rootScope, Jobs, buildNotifier);
 
-  initOptions($rootScope, Storage);
-  initJobs(Jobs, Storage, $rootScope);
-
   return {
     _: _,
     $rootScope: $rootScope,
@@ -377,6 +374,10 @@ var Services = (function () {
     Jobs: Jobs,
     Notification: Notification,
     buildNotifier: buildNotifier,
-    buildWatcher: buildWatcher
+    buildWatcher: buildWatcher,
+    init: function () {
+      initOptions($rootScope, Storage);
+      initJobs(Jobs, Storage, $rootScope);
+    }
   };
 })();

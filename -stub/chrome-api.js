@@ -1,4 +1,4 @@
-chrome = chrome || {};
+var chrome = chrome || {};
 chrome.runtime = chrome.runtime || {};
 chrome.notifications = chrome.notifications || {
 		onClicked: {
@@ -29,7 +29,7 @@ chrome.storage = chrome.storage || {
 	};
 chrome.storage.local = chrome.storage.local || {
 		get: function (keys, callback) {
-			callback(JSON.parse(localStorage.getItem("storage")) || {});
+			callback(JSON.parse(localStorage.getItem("storage")) || keys);
 		},
 		set: function (objects, callback) {
 			localStorage.setItem("storage", JSON.stringify(objects));
