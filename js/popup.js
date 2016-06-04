@@ -21,7 +21,7 @@
 
   function documentReady() {
     Services.init();
-    
+
     var Jobs = Services.Jobs;
 
     var $rootScope = Services.$rootScope;
@@ -100,7 +100,7 @@
       renderJob(node, url, job);
 
       var avatar = node.querySelector('img.avatar');
-      avatar.className = avatar.className.replace(/alert-.+$/, '').replace(/$/, 'alert-' + job.statusClass);
+      avatar.className = avatar.className.replace(/alert-.*$/, '').replace(/$/, 'alert-' + job.statusClass);
 
       node.querySelector('[data-id="job.name"]').innerText = job.name;
 
@@ -121,7 +121,7 @@
       urlLink.innerText = decodeURI(job.url);
 
       var badge = node.querySelector('.badge');
-      badge.className = badge.className.replace(/alert-.+$/, '').replace(/$/, 'alert-' + job.statusClass);
+      badge.className = badge.className.replace(/alert-.*$/, '').replace(/$/, 'alert-' + job.statusClass);
       badge.innerText = job.status;
     }
 
