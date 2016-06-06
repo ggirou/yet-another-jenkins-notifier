@@ -1,6 +1,6 @@
 /**
  * Yet Another Jenkins Notifier
- * Copyright (C) 2015 Guillaume Girou
+ * Copyright (C) 2016 Guillaume Girou
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -15,15 +15,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-angular.module('jenkins.notifier').run(function ($rootScope, $q, Jobs, buildWatcher) {
+
+(function () {
+  "use strict";
+
+  Services.init();
+
+  var $rootScope = Services.$rootScope;
+  var Jobs = Services.Jobs;
+  var $q = Services.$q;
+  var _ = Services._;
+
   $rootScope.$on('Jobs::jobs.initialized', function () {
-    Jobs.updateAllStatus().then($q.all).then(buildWatcher);
+    Jobs.updateAllStatus().then($q.all).then(Services.buildWatcher);
   });
-  $rootScope.$on('Jobs::jobs.changed', function (_, jobs) {
+  $rootScope.$on('Jobs::jobs.changed', function (event, jobs) {
     var counts = {};
-    angular.forEach(jobs, function (data) {
+    _.forEach(jobs, function (data) {
       if (data.isView) {
-        angular.forEach(data.jobs, function (viewJob) {
+        _.forEach(data.jobs, function (viewJob) {
           counts[viewJob.status] = (counts[viewJob.status] || 0) + 1;
         });
       } else {
@@ -36,6 +46,4 @@ angular.module('jenkins.notifier').run(function ($rootScope, $q, Jobs, buildWatc
     chrome.browserAction.setBadgeText({text: count.toString()});
     chrome.browserAction.setBadgeBackgroundColor({color: color});
   });
-});
-
-angular.bootstrap(document, ['jenkins.notifier']);
+})();

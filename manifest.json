@@ -11,7 +11,9 @@
       "strict_min_version": "46.0"
     }
   },
+  "minimum_chrome_version": "45",
   "browser_action": {
+    "browser_style": false,
     "default_icon": "img/icon.png",
     "default_popup": "popup.html",
     "default_title": "Yet Another Jenkins Notifier"
@@ -22,7 +24,7 @@
     "128": "img/icon128.png"
   },
   "background": {
-    "scripts": ["js/angular.min.js", "js/main.js", "js/background.js", "js/ga.js"]
+    "scripts": ["js/services.js", "js/background.js", "js/ga.js"]
   },
   "options_ui": {
     "page": "options.html",

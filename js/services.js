@@ -1,6 +1,6 @@
 /**
  * Yet Another Jenkins Notifier
- * Copyright (C) 2015 Guillaume Girou
+ * Copyright (C) 2016 Guillaume Girou
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -15,40 +15,33 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-angular.module('jenkins.notifier', [])
-  .controller('JobListController', function ($scope, $window, $interval, Runtime, Jobs, buildNotifier) {
-    var placeholderUrls = [
-      "http://jenkins/ for all jobs",
-      "http://jenkins/job/my_job/ for one job",
-      "http://jenkins/job/my_view/ for view jobs"
-    ];
-    var i = 0;
-    $scope.placholderUrl = placeholderUrls[0];
-    $interval(function () {
-      $scope.placholderUrl = placeholderUrls[++i % placeholderUrls.length];
-    }, 5000);
 
-    $scope.$on('Jobs::jobs.initialized', function () {
-      Jobs.updateAllStatus().then(buildNotifier);
-    });
-    $scope.$on('Jobs::jobs.changed', function (_, jobs) {
-      $scope.jobs = jobs;
-    });
+var Services = (function () {
+  'use strict';
 
-    $scope.add = function (url) {
-      Jobs.add(url).then(function () {
-        $scope.url = "";
-      }).then(function () {
-        return Jobs.updateStatus(url);
-      });
-    };
+  var _ = {
+    forEach: function (obj, iterator) {
+      if (obj) {
+        if (obj.forEach) {
+          obj.forEach(iterator);
+        } else if ('length' in obj && obj.length > 0) {
+          for (var i = 0; i < obj.length; i++) {
+            iterator(obj[i], i);
+          }
+        } else {
+          for (var key in obj) {
+            if (obj.hasOwnProperty(key)) {
+              iterator(obj[key], key);
+            }
+          }
+        }
+      }
+      return obj;
+    }
+  };
 
-    $scope.remove = Jobs.remove;
-
-    $scope.openOptionsPage = Runtime.openOptionsPage;
-  })
   // Initialize options and listen for changes
-  .run(function ($rootScope, Storage) {
+  function initOptions($rootScope, Storage) {
     $rootScope.options = {
       refreshTime: 60,
       notification: 'all'
@@ -65,9 +58,10 @@ angular.module('jenkins.notifier', [])
         $rootScope.$broadcast('Options::options.changed', $rootScope.options);
       }
     });
-  })
+  }
+
   // Initialize jobs and listen for changes
-  .run(function (Jobs, Storage, $rootScope) {
+  function initJobs(Jobs, Storage, $rootScope) {
     Jobs.jobs = {};
 
     Storage.get({jobs: Jobs.jobs}).then(function (objects) {
@@ -82,19 +76,22 @@ angular.module('jenkins.notifier', [])
         $rootScope.$broadcast('Jobs::jobs.changed', Jobs.jobs);
       }
     });
-  })
-  .service('defaultJobData', function () {
+  }
+
+  function defaultJobDataService() {
     return function (url, status) {
       var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
       return {
-        name: decodeURI(url.replace(jobNameRegExp, "$1")),
-        url: url,
+        name: decodeURI(url.replace(jobNameRegExp, '$1')),
+        url: decodeURI(url),
         status: status,
+        building: false,
         lastBuild: {}
       };
     }
-  })
-  .service('Jobs', function ($q, Storage, jenkins, defaultJobData) {
+  }
+
+  function JobsService($q, Storage, jenkins, defaultJobData) {
     var Jobs = {
       jobs: {},
       add: function (url, data) {
@@ -116,7 +113,7 @@ angular.module('jenkins.notifier', [])
       },
       updateAllStatus: function () {
         var promises = [];
-        angular.forEach(Jobs.jobs, function (_, url) {
+        _.forEach(Jobs.jobs, function (_, url) {
           promises.push(Jobs.updateStatus(url));
         });
         return $q.when(promises);
@@ -124,12 +121,9 @@ angular.module('jenkins.notifier', [])
     };
 
     return Jobs;
-  })
-  .config(function ($httpProvider) {
-    $httpProvider.useApplyAsync(true);
-    $httpProvider.defaults.cache = false;
-  })
-  .service('jenkins', function ($http, $q, defaultJobData) {
+  }
+
+  function jenkinsService(defaultJobData) {
     var xmlParser = new DOMParser();
     var viewUrlRegExp = /^http:\/\/[^/]+\/(view\/[^/]+\/)?$/;
     var buildingRegExp = /_anime$/;
@@ -144,30 +138,37 @@ angular.module('jenkins.notifier', [])
       notbuilt: 'Not built',
       disabled: 'Disabled'
     };
+    var fetchOptions = {
+      credentials: 'include'
+    };
 
     function jobMapping(data) {
-      var basicColor = (data.color || "").replace(buildingRegExp, '');
+      var basicColor = (data.color || '').replace(buildingRegExp, '');
       var lastBuild = data.lastCompletedBuild || {};
       return {
         name: data.displayName || data.name,
-        url: data.url,
+        url: decodeURI(data.url),
         building: buildingRegExp.test(data.color),
         status: status[basicColor] || basicColor,
         statusClass: colorToClass[basicColor],
-        lastBuildNumber: lastBuild.number || ""
+        lastBuildNumber: lastBuild.number || ''
       };
     }
 
     return function (url) {
       url = url.charAt(url.length - 1) === '/' ? url : url + '/';
 
-      return $http.get(url + 'api/json/').then(function (res) {
-        var data = res.data;
+      return fetch(url + 'api/json/', fetchOptions).then(function (res) {
+        return res.ok ? res.json() : Promise.reject(res);
+      }).then(function (data) {
         if (viewUrlRegExp.test(url)) {
           var view = {
             isView: true,
-            name: data.name || data.nodeName || "All jobs",
-            url: data.url || url,
+            name: data.name || data.nodeName || 'All jobs',
+            url: decodeURI(data.url || url),
+            building: false,
+            status: '',
+            statusClass: '',
             jobs: data.jobs.reduce(function (jobs, data) {
               var job = jobMapping(data);
               jobs[job.name] = job;
@@ -175,17 +176,19 @@ angular.module('jenkins.notifier', [])
             }, {})
           };
 
-          return $http.get(url + 'cc.xml').then(function (res) {
-            var projects = xmlParser.parseFromString(res.data, "text/xml").getElementsByTagName("Project");
-            angular.forEach(projects, function (project) {
-              var name = project.attributes["name"].value;
-              var url = project.attributes["webUrl"].value;
-              var lastBuildNumber = project.attributes["lastBuildLabel"].value;
+          return fetch(url + 'cc.xml', fetchOptions).then(function (res) {
+            return res.ok ? res.text() : Promise.reject(res);
+          }).then(function (text) {
+            var projects = xmlParser.parseFromString(text, 'text/xml').getElementsByTagName('Project');
+            _.forEach(projects, function (project) {
+              var name = project.attributes['name'].value;
+              var url = project.attributes['webUrl'].value;
+              var lastBuildNumber = project.attributes['lastBuildLabel'].value;
 
               var job = view.jobs[name];
               if (job && !job.lastBuildNumber) {
                 job.lastBuildNumber = lastBuildNumber;
-                job.url = url;
+                job.url = decodeURI(url);
               }
             });
             return view;
@@ -197,50 +200,53 @@ angular.module('jenkins.notifier', [])
         return defaultJobData(url, res.status == 403 ? 'Forbidden' : 'Unreachable');
       });
     }
-  })
-  .service('buildWatcher', function ($rootScope, $interval, Jobs, buildNotifier) {
+  }
+
+  function buildWatcherService($rootScope, Jobs, buildNotifier) {
     function runUpdateAndNotify(options) {
       if (options.notification === 'none')
         return;
 
-      return $interval(function (Jobs, buildNotifier) {
+      return window.setInterval(function (Jobs, buildNotifier) {
         Jobs.updateAllStatus().then(buildNotifier);
-      }, options.refreshTime * 1000, 0, false, Jobs, buildNotifier);
+      }, options.refreshTime * 1000, Jobs, buildNotifier);
     }
 
     return function () {
       var currentInterval = runUpdateAndNotify($rootScope.options);
 
       $rootScope.$on('Options::options.changed', function (_, options) {
-        $interval.cancel(currentInterval);
+        window.clearInterval(currentInterval);
         currentInterval = runUpdateAndNotify(options);
       });
     };
-  })
-  .service('buildNotifier', function ($rootScope, Notification) {
+  }
+
+  function buildNotifierService($rootScope, Notification) {
     function jobNotifier(newValue, oldValue) {
       oldValue = oldValue || {};
       if (oldValue.lastBuildNumber == newValue.lastBuildNumber)
         return;
 
-      var title = "Build " + newValue.status + "!";
+      var title = 'Build ' + newValue.status + '!';
       if ($rootScope.options.notification === 'unstable' && newValue.status === 'Success' && newValue.lastBuildNumber > 1) {
         if (oldValue.status === 'Success') {
           return;
         } else {
-          title = "Build back to stable!";
+          title = 'Build back to stable!';
         }
       }
 
+      var buildUrl = newValue.url + newValue.lastBuildNumber;
       Notification.create(null, {
-          type: "basic",
-          title: title + " - " + newValue.name,
-          message: decodeURI(newValue.url + newValue.lastBuildNumber),
-          iconUrl: "img/logo.svg"
+          type: 'basic',
+          title: title + ' - ' + newValue.name,
+          message: buildUrl,
+          iconUrl: 'img/logo.svg'
         },
         {
           onClicked: function () {
-            window.open(newValue.url + newValue.lastBuildNumber);
+            window.open(buildUrl);
           }
         }
       );
@@ -257,7 +263,7 @@ angular.module('jenkins.notifier', [])
           var newValue = data.newValue;
 
           if (newValue.isView) {
-            angular.forEach(newValue.jobs, function (job, name) {
+            _.forEach(newValue.jobs, function (job, name) {
               jobNotifier(job, oldValue && oldValue.jobs && oldValue.jobs[name]);
             });
           } else {
@@ -266,11 +272,9 @@ angular.module('jenkins.notifier', [])
         });
       });
     };
-  })
-  .filter('decodeURI', function () {
-    return decodeURI;
-  })
-  .service('Storage', function ($q) {
+  }
+
+  function StorageService($q) {
     var storage = chrome.storage.local;
 
     function promisedCallback(deferred) {
@@ -296,21 +300,22 @@ angular.module('jenkins.notifier', [])
         return deferred.promise;
       }
     };
-  })
-  .service('Notification', function ($q) {
+  }
+
+  function NotificationService($q) {
     var notifications = chrome.notifications;
     var Listeners = {};
 
     notifications.onClicked.addListener(function (notificationId) {
       var listener = Listeners[notificationId] || {};
-      if (angular.isFunction(listener.onClicked)) {
+      if (typeof listener.onClicked === 'function') {
         listener.onClicked();
       }
     });
 
     notifications.onClosed.addListener(function (notificationId) {
       var listener = Listeners[notificationId] || {};
-      if (angular.isFunction(listener.onClosed)) {
+      if (typeof listener.onClosed === 'function') {
         listener.onClosed();
       }
       delete Listeners[notificationId];
@@ -326,19 +331,54 @@ angular.module('jenkins.notifier', [])
         });
       }
     };
-  })
-  .service('Runtime', function ($window) {
-    return {
-      openOptionsPage: function () {
-        var runtime = chrome.runtime;
-        if (runtime.openOptionsPage) {
-          // New way to open options pages, if supported (Chrome 42+).
-          runtime.openOptionsPage();
-        } else {
-          // Reasonable fallback.
-          $window.open(runtime.getURL('options.html'));
-        }
-      }
-    };
-  })
-;
+  }
+
+  var $rootScope = {
+    $broadcast: function (name, detail) {
+      window.dispatchEvent(new CustomEvent(name, {detail: detail}));
+    },
+    $on: function (name, callback) {
+      window.addEventListener(name, function (e) {
+        callback(e, e.detail);
+      });
+    }
+  };
+  var $q = {
+    defer: function () {
+      var defer = {};
+      defer.promise = new Promise(function (resolve, reject) {
+        defer.resolve = resolve;
+        defer.reject = reject;
+      });
+      return defer;
+    },
+    when: function (value) {
+      return Promise.resolve(value);
+    },
+    all: function (iterable) {
+      return Promise.all(iterable);
+    }
+  };
+  var Storage = StorageService($q);
+  var defaultJobData = defaultJobDataService();
+  var jenkins = jenkinsService(defaultJobData);
+  var Jobs = JobsService($q, Storage, jenkins, defaultJobData);
+  var Notification = NotificationService($q);
+  var buildNotifier = buildNotifierService($rootScope, Notification);
+  var buildWatcher = buildWatcherService($rootScope, Jobs, buildNotifier);
+
+  return {
+    _: _,
+    $rootScope: $rootScope,
+    $q: $q,
+    Storage: Storage,
+    Jobs: Jobs,
+    Notification: Notification,
+    buildNotifier: buildNotifier,
+    buildWatcher: buildWatcher,
+    init: function () {
+      initOptions($rootScope, Storage);
+      initJobs(Jobs, Storage, $rootScope);
+    }
+  };
+})();
