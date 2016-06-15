@@ -47,7 +47,11 @@
     placeholderRotate();
 
     function openOptionsPage() {
-      chrome.runtime.openOptionsPage(); // Chrome 42+
+      if (chrome.runtime.openOptionsPage) {
+        chrome.runtime.openOptionsPage(); // Chrome 42+, Firefox 48
+      } else {
+        window.open(chrome.runtime.getURL('options.html'));
+      }
     }
 
     function addUrl(event) {
