@@ -306,20 +306,22 @@ var Services = (function () {
     var notifications = chrome.notifications;
     var Listeners = {};
 
-    notifications.onClicked.addListener(function (notificationId) {
-      var listener = Listeners[notificationId] || {};
-      if (typeof listener.onClicked === 'function') {
-        listener.onClicked();
-      }
-    });
+    if(notifications.onClicked) { // Firefox 47
+      notifications.onClicked.addListener(function (notificationId) {
+        var listener = Listeners[notificationId] || {};
+        if (typeof listener.onClicked === 'function') {
+          listener.onClicked();
+        }
+      });
 
-    notifications.onClosed.addListener(function (notificationId) {
-      var listener = Listeners[notificationId] || {};
-      if (typeof listener.onClosed === 'function') {
-        listener.onClosed();
-      }
-      delete Listeners[notificationId];
-    });
+      notifications.onClosed.addListener(function (notificationId) {
+        var listener = Listeners[notificationId] || {};
+        if (typeof listener.onClosed === 'function') {
+          listener.onClosed();
+        }
+        delete Listeners[notificationId];
+      });
+    }
 
     return {
       create: function (notificationId, options, listeners) {
