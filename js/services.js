@@ -246,7 +246,7 @@ var Services = (function () {
         },
         {
           onClicked: function () {
-            window.open(buildUrl);
+            chrome.tabs.create({'url': buildUrl});
           }
         }
       );
@@ -306,7 +306,7 @@ var Services = (function () {
     var notifications = chrome.notifications;
     var Listeners = {};
 
-    if(notifications.onClicked) { // Firefox 47
+    if (notifications.onClicked) { // Firefox 47
       notifications.onClicked.addListener(function (notificationId) {
         var listener = Listeners[notificationId] || {};
         if (typeof listener.onClicked === 'function') {
