@@ -32,7 +32,7 @@
   $rootScope.$on('Jobs::jobs.changed', function (event, jobs) {
     var counts = {};
     _.forEach(jobs, function (data) {
-      if (data.isView) {
+      if (data.jobs) {
         _.forEach(data.jobs, function (viewJob) {
           counts[viewJob.status] = (counts[viewJob.status] || 0) + 1;
         });

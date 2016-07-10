@@ -125,7 +125,6 @@ var Services = (function () {
 
   function jenkinsService(defaultJobData) {
     var xmlParser = new DOMParser();
-    var viewUrlRegExp = /^http:\/\/[^/]+\/(view\/[^/]+\/)?$/;
     var buildingRegExp = /_anime$/;
     var colorToClass = {
       blue: 'success', yellow: 'warning', red: 'danger'
@@ -146,12 +145,17 @@ var Services = (function () {
       var basicColor = (data.color || '').replace(buildingRegExp, '');
       var lastBuild = data.lastCompletedBuild || {};
       return {
-        name: data.displayName || data.name,
+        name: data.displayName || data.name || data.nodeName || 'All jobs',
         url: decodeURI(data.url),
         building: buildingRegExp.test(data.color),
         status: status[basicColor] || basicColor,
-        statusClass: colorToClass[basicColor],
-        lastBuildNumber: lastBuild.number || ''
+        statusClass: colorToClass[basicColor] || '',
+        lastBuildNumber: lastBuild.number || '',
+        jobs: data.jobs && data.jobs.reduce(function (jobs, data) {
+          var job = jobMapping(data);
+          jobs[job.name] = job;
+          return jobs;
+        }, {})
       };
     }
 
@@ -161,40 +165,30 @@ var Services = (function () {
       return fetch(url + 'api/json/', fetchOptions).then(function (res) {
         return res.ok ? res.json() : Promise.reject(res);
       }).then(function (data) {
-        if (viewUrlRegExp.test(url)) {
-          var view = {
-            isView: true,
-            name: data.name || data.nodeName || 'All jobs',
-            url: decodeURI(data.url || url),
-            building: false,
-            status: '',
-            statusClass: '',
-            jobs: data.jobs.reduce(function (jobs, data) {
-              var job = jobMapping(data);
-              jobs[job.name] = job;
-              return jobs;
-            }, {})
-          };
+        var job = jobMapping(data);
 
+        if(data.jobs) {
           return fetch(url + 'cc.xml', fetchOptions).then(function (res) {
             return res.ok ? res.text() : Promise.reject(res);
           }).then(function (text) {
             var projects = xmlParser.parseFromString(text, 'text/xml').getElementsByTagName('Project');
+
             _.forEach(projects, function (project) {
               var name = project.attributes['name'].value;
               var url = project.attributes['webUrl'].value;
               var lastBuildNumber = project.attributes['lastBuildLabel'].value;
 
-              var job = view.jobs[name];
-              if (job && !job.lastBuildNumber) {
-                job.lastBuildNumber = lastBuildNumber;
-                job.url = decodeURI(url);
+              var subJob = job.jobs[name];
+              if (subJob && !subJob.lastBuildNumber) {
+                subJob.lastBuildNumber = lastBuildNumber;
+                subJob.url = decodeURI(url);
               }
             });
-            return view;
+
+            return job;
           });
         } else {
-          return jobMapping(data);
+          return job;
         }
       }).catch(function (res) {
         return defaultJobData(url, res.status == 403 ? 'Forbidden' : 'Unreachable');
@@ -262,7 +256,7 @@ var Services = (function () {
           var oldValue = data.oldValue;
           var newValue = data.newValue;
 
-          if (newValue.isView) {
+          if (newValue.jobs) {
             _.forEach(newValue.jobs, function (job, name) {
               jobNotifier(job, oldValue && oldValue.jobs && oldValue.jobs[name]);
             });
