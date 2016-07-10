@@ -6,6 +6,7 @@ This extension monitors Jenkins jobs and notifies you of build results with desk
 Features:  
 ✔ Pop-up notifications  
 ✔ Single job, view jobs or all jobs monitoring  
+✔ Folder and Pipeline support  
 ✔ Multiple Jenkins servers support  
 ✔ Number of failing, unstable or stable jobs in icon badge  
 ✔ Choose to be notified on every build or on every unstable build
