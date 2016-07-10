@@ -105,7 +105,7 @@
       renderJob(node, url, job);
 
       var closeButton = node.querySelector('button.close');
-      closeButton.dataset.url = job.url;
+      closeButton.dataset.url = url;
       closeButton.addEventListener('click', removeUrlClick);
 
       var subJobs = node.querySelector('[data-id="jobs"]');
