@@ -153,7 +153,7 @@ var Services = (function () {
         lastBuildNumber: lastBuild.number || '',
         jobs: data.jobs && data.jobs.reduce(function (jobs, data) {
           var job = jobMapping(data);
-          jobs[job.name] = job;
+          jobs[job.url] = job;
           return jobs;
         }, {})
       };
@@ -178,7 +178,7 @@ var Services = (function () {
               var url = project.attributes['webUrl'].value;
               var lastBuildNumber = project.attributes['lastBuildLabel'].value;
 
-              var subJob = job.jobs[name];
+              var subJob = job.jobs[url];
               if (subJob && !subJob.lastBuildNumber) {
                 subJob.lastBuildNumber = lastBuildNumber;
                 subJob.url = decodeURI(url);
@@ -257,8 +257,8 @@ var Services = (function () {
           var newValue = data.newValue;
 
           if (newValue.jobs) {
-            _.forEach(newValue.jobs, function (job, name) {
-              jobNotifier(job, oldValue && oldValue.jobs && oldValue.jobs[name]);
+            _.forEach(newValue.jobs, function (job, url) {
+              jobNotifier(job, oldValue && oldValue.jobs && oldValue.jobs[url]);
             });
           } else {
             jobNotifier(newValue, oldValue);
