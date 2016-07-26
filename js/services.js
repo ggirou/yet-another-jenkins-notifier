@@ -129,6 +129,9 @@ var Services = (function () {
     var colorToClass = {
       blue: 'success', yellow: 'warning', red: 'danger'
     };
+    var colorToIcon = {
+      blue: 'green', yellow: 'yellow', red: 'red'
+    };
     var status = {
       blue: 'Success',
       yellow: 'Unstable',
@@ -150,6 +153,7 @@ var Services = (function () {
         building: buildingRegExp.test(data.color),
         status: status[basicColor] || basicColor,
         statusClass: colorToClass[basicColor] || '',
+        statusIcon: colorToIcon[basicColor] || 'grey',
         lastBuildNumber: lastBuild.number || '',
         jobs: data.jobs && data.jobs.reduce(function (jobs, data) {
           var job = jobMapping(data);
@@ -236,7 +240,7 @@ var Services = (function () {
           type: 'basic',
           title: title + ' - ' + newValue.name,
           message: buildUrl,
-          iconUrl: 'img/logo.svg'
+          iconUrl: 'img/logo-' + newValue.statusIcon + '.svg'
         },
         {
           onClicked: function () {
