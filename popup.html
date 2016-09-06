@@ -12,12 +12,13 @@
   <link href="css/custom.css" rel="stylesheet">
 </head>
 <body class="container-fluid">
-<section class="col-xs-12">
-  <h2>
+<section>
+  <h1 class="h4">
     Yet Another Jenkins Notifier
     <small><a id="optionsLink" href="#"><span class="glyphicon glyphicon-cog"></span></a></small>
-  </h2>
-  <hr>
+  </h1>
+</section>
+<section class="fixed-bottom">
   <form id="urlForm" name="urlForm" class="form-inline">
     <div class="form-group">
       <div class="input-group">
@@ -34,11 +35,8 @@
     </div>
   </form>
 </section>
-<section class="col-xs-12">
-  <h3>Jobs</h3>
-
-  <div id="jobList" class="list-group">
-  </div>
+<section>
+  <div id="jobList" class="list-group" data-emptytext="No jobs. Please enter a url below to listen for job builds."></div>
 
   <template id="jobItemTemplate">
     <div class="list-group-item">

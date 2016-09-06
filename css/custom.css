@@ -15,10 +15,29 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-body, section {
+body {
     width: 500px;
-    min-height: 300px;
+    min-height: 200px;
+    padding-bottom: 39px;
     overflow-x: hidden;
+}
+
+.fixed-bottom {
+  position: fixed;
+  bottom: 5px;
+  left: 15px;
+  right: 15px;
+  background: white;
+  z-index: 1;
+}
+.fixed-bottom .form-group {
+  margin: 0;
+}
+
+#jobList:empty:before {
+  font-style: italic;
+  content: attr(data-emptytext);
+  color: #999;
 }
 
 .avatar {
