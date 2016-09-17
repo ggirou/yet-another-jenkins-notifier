@@ -34,10 +34,8 @@ body {
   margin: 0;
 }
 
-#jobList:empty:before {
-  font-style: italic;
-  content: attr(data-emptytext);
-  color: #999;
+#jobList:not(:empty) + .help-block {
+  display: none;
 }
 
 .avatar {
