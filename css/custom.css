@@ -16,10 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 body {
-    width: 500px;
-    min-height: 200px;
-    padding-bottom: 39px;
-    overflow-x: hidden;
+  width: 500px;
+  min-height: 200px;
+  padding-bottom: 39px;
+  overflow-x: hidden;
 }
 
 .fixed-bottom {
@@ -30,56 +30,137 @@ body {
   background: white;
   z-index: 1;
 }
+
 .fixed-bottom .form-group {
   margin: 0;
 }
 
-#jobList:empty:before {
-  font-style: italic;
-  content: attr(data-emptytext);
-  color: #999;
+.brand {
+  position: relative;
+}
+.brand > .btn {
+  /*position: absolute;*/
+  text-align: left;
+}
+
+.brand > .btn:hover,
+.brand > .btn:focus {
+  /*position: absolute;*/
+}
+
+/*.brand > a > span {*/
+  /*transition: all 1s ease-in-out;*/
+/*}*/
+
+.brand > .btn > span {
+  display: inline-block;
+  max-width: 0;
+  overflow: hidden;
+  vertical-align: bottom;
+  transition: max-width 1s ease-in-out;
+}
+
+.brand > .btn:hover > span,
+.brand > .btn:focus > span {
+
+  max-width: 100%;
+}
+
+.brand:hover > span + .input-group,
+.brand:focus > span + .input-group {
+  background: red;
+  max-width: 0%;
+  width: 0%;
+}
+
+/*.flex-group {*/
+/*flex-basis: auto;*/
+/*display: flex;*/
+/*flex-direction: row;*/
+/*!*height: 100%;*!*/
+/*}*/
+
+/*.flex-group > * {*/
+/*flex-grow: 0.001;*/
+/*!*flex-shrink: 1;*!*/
+/*flex-basis: auto;*/
+/*transition: flex-grow 2s;*/
+/*}*/
+
+/*.flex-group > input {*/
+/*flex-shrink: 1;*/
+/*}*/
+
+/*.flex-group > .input-group-btn:hover {*/
+/*flex-grow: 1;*/
+/*}*/
+
+/*.flex-group > .input-group-btn:hover + * + input {*/
+/*flex-grow: 0.001;*/
+/*}*/
+
+/*.collapse {*/
+/*flex-grow: 0.001;*/
+/*}*/
+
+.navbar > div {
+  display: table-cell;
+}
+
+.navbar-form .input-group {
+  /*display: table;*/
+  /*width: 100%;*/
+}
+
+#jobList:not(:empty) + .help-block {
+  display: none;
+}
+
+.help-block {
+  /*font-style: italic;*/
+  /*color: #999;*/
 }
 
 .avatar {
-    border-width: 0 0 0 5px;
-    border-style: solid;
-    vertical-align: bottom;
+  border-width: 0 0 0 5px;
+  border-style: solid;
+  vertical-align: bottom;
 }
 
 .inline-block {
-    display: inline-block;
+  display: inline-block;
 }
 
 .cursor-pointer {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .no-margin {
-    margin: 0;
+  margin: 0;
 }
 
 .job-title {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
 }
 
 .building {
-    animation-name: building;
-    animation-duration: 1.5s;
-    animation-timing-function: ease-out;
-    animation-direction: alternate;
-    animation-iteration-count: infinite;
-    animation-fill-mode: none;
-    animation-play-state: running;
+  animation-name: building;
+  animation-duration: 1.5s;
+  animation-timing-function: ease-out;
+  animation-direction: alternate;
+  animation-iteration-count: infinite;
+  animation-fill-mode: none;
+  animation-play-state: running;
 }
 
 @keyframes building {
-    0% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0.5;
-    }
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
 }

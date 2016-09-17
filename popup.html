@@ -12,31 +12,60 @@
   <link href="css/custom.css" rel="stylesheet">
 </head>
 <body class="container-fluid">
+<!--<nav class="navbar navbar-default">-->
+<!--&lt;!&ndash; Brand and toggle get grouped for better mobile display &ndash;&gt;-->
+<!--<div class="navbar-header navbar-left">-->
+<!--<a class="navbar-brand" href="https://github.com/ggirou/yet-another-jenkins-notifier">-->
+<!--Y<span>et&nbsp;</span>A<span>nother&nbsp;</span>J<span>enkins&nbsp;</span>N<span>otifier</span>-->
+<!--</a>-->
+<!--</div>-->
+<!--<form class="navbar-form">-->
+<!--<div class="form-group">-->
+<!--<div class="input-group">-->
+<!--<label class="input-group-addon" for="url">Url</label>-->
+<!--<input type="url" class="form-control" id="url" name="url"-->
+<!--autofocus tabindex="1" required>-->
+<!--<span class="input-group-btn">-->
+<!--<button id="addButton" type="submit" class="btn btn-primary">-->
+<!--<span class="glyphicon glyphicon-plus"></span>-->
+<!--</button>-->
+<!--</span>-->
+<!--</div>-->
+<!--&lt;!&ndash;<div id="errorMessage" class="help-block"></div>&ndash;&gt;-->
+<!--</div>-->
+<!--</form>-->
+<!--</nav>-->
 <section>
   <h1 class="h4">
     Yet Another Jenkins Notifier
     <small><a id="optionsLink" href="#"><span class="glyphicon glyphicon-cog"></span></a></small>
   </h1>
 </section>
-<section class="fixed-bottom">
-  <form id="urlForm" name="urlForm" class="form-inline">
-    <div class="form-group">
-      <div class="input-group">
-        <label class="input-group-addon" for="url">Url</label>
-        <input type="url" class="form-control" id="url" name="url"
-               autofocus tabindex="1" required>
-        <span class="input-group-btn">
-          <button id="addButton" type="submit" class="btn btn-primary">
-            <span class="glyphicon glyphicon-plus"></span>
-          </button>
-        </span>
+<section class="">
+  <form id="urlForm" name="urlForm">
+    <div class="input-group">
+      <div class="input-group-btn brand">
+        <a class="btn btn-default" href="https://github.com/ggirou/yet-another-jenkins-notifier">
+          Y<span>et&nbsp;</span>A<span>nother&nbsp;</span>J<span>enkins&nbsp;</span>N<span>otifier</span>
+          <!--Yet Another Jenkins Notifier-->
+        </a>
+      </div>
+      <label class="input-group-addon" for="url">Url</label>
+      <input type="url" class="form-control" id="url" name="url"
+             autofocus tabindex="1" required>
+      <div class="input-group-btn">
+        <button id="addButton" type="submit" class="btn btn-primary">
+          <span class="glyphicon glyphicon-plus"></span>
+        </button>
       </div>
       <div id="errorMessage" class="help-block"></div>
     </div>
   </form>
 </section>
 <section>
-  <div id="jobList" class="list-group" data-emptytext="No jobs. Please enter a url below to listen for job builds."></div>
+  <div id="jobList" class="list-group"></div>
+
+  <p class="help-block">No jobs. Please enter a url below to listen for job builds.</p>
 
   <template id="jobItemTemplate">
     <div class="list-group-item">

@@ -37,7 +37,7 @@
     var urlForm = document.getElementById('urlForm');
     var urlInput = document.getElementById('url');
     var addButton = document.getElementById('addButton');
-    var errorMessage = document.getElementById('errorMessage');
+    // var errorMessage = document.getElementById('errorMessage');
 
     optionsLink.addEventListener('click', openOptionsPage);
     urlForm.addEventListener('submit', addUrl);
@@ -71,8 +71,8 @@
 
       addButton.disabled = isFormInvalid;
       urlForm.classList.toggle('has-error', isFormInvalid && urlInput.value);
-      errorMessage.classList.toggle('hidden', isUrlInvalid);
-      errorMessage.innerText = urlInput.validationMessage;
+      // errorMessage.classList.toggle('hidden', isUrlInvalid);
+      // errorMessage.innerText = urlInput.validationMessage;
     }
 
     function placeholderRotate() {
