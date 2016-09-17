@@ -18,20 +18,7 @@
 body {
     width: 500px;
     min-height: 200px;
-    padding-bottom: 39px;
-    overflow-x: hidden;
-}
-
-.fixed-bottom {
-  position: fixed;
-  bottom: 5px;
-  left: 15px;
-  right: 15px;
-  background: white;
-  z-index: 1;
-}
-.fixed-bottom .form-group {
-  margin: 0;
+    padding-bottom: 10px;
 }
 
 #jobList:not(:empty) + .help-block {
@@ -42,10 +29,6 @@ body {
     border-width: 0 0 0 5px;
     border-style: solid;
     vertical-align: bottom;
-}
-
-.inline-block {
-    display: inline-block;
 }
 
 .cursor-pointer {
@@ -61,6 +44,19 @@ body {
     text-overflow: ellipsis;
     white-space: nowrap;
     width: 100%;
+}
+
+.dl-horizontal dt {
+  float: left;
+  width: 120px;
+  overflow: hidden;
+  clear: left;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dl-horizontal dd {
+  margin-left: 140px;
 }
 
 .building {

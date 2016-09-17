@@ -12,30 +12,13 @@
   <link href="css/custom.css" rel="stylesheet">
 </head>
 <body class="container-fluid">
-<section>
+<header>
   <h1 class="h4">
     Yet Another Jenkins Notifier
     <small><a id="optionsLink" href="#"><span class="glyphicon glyphicon-cog"></span></a></small>
   </h1>
-</section>
-<section class="fixed-bottom">
-  <form id="urlForm" name="urlForm" class="form-inline">
-    <div class="form-group">
-      <div class="input-group">
-        <label class="input-group-addon" for="url">Url</label>
-        <input type="url" class="form-control" id="url" name="url"
-               autofocus tabindex="1" required>
-        <span class="input-group-btn">
-          <button id="addButton" type="submit" class="btn btn-primary">
-            <span class="glyphicon glyphicon-plus"></span>
-          </button>
-        </span>
-      </div>
-      <div id="errorMessage" class="help-block"></div>
-    </div>
-  </form>
-</section>
-<section>
+</header>
+<main>
   <div id="jobList" class="list-group"></div>
 
   <p class="help-block">No jobs. Please enter a url below to listen for job builds.</p>
@@ -81,7 +64,37 @@
       </div>
     </li>
   </template>
-</section>
+</main>
+<footer>
+  <form id="urlForm" name="urlForm">
+    <div class="input-group">
+      <label class="input-group-addon" for="url">Url</label>
+      <input type="url" class="form-control" id="url" name="url"
+             autofocus tabindex="1" required>
+        <span class="input-group-btn">
+          <button id="addButton" type="submit" class="btn btn-primary">
+            <span class="glyphicon glyphicon-plus"></span>
+          </button>
+        </span>
+    </div>
+    <div id="errorMessage" class="help-block"></div>
+    <div class="help-block">
+      Examples:
+      <dl class="dl-horizontal">
+        <dt>One job</dt>
+        <dd>http://jenkins/job/my_job/</dd>
+        <dt>Multibranch job</dt>
+        <dd>http://jenkins/job/my_multibranch_job/</dd>
+        <dt>View jobs</dt>
+        <dd>http://jenkins/job/my_view/</dd>
+        <dt>Folder jobs</dt>
+        <dd>http://jenkins/job/my_folder/</dd>
+        <dt>All jobs</dt>
+        <dd>http://jenkins/</dd>
+      </dl>
+    </div>
+  </form>
+</footer>
 </body>
 </html>
 
