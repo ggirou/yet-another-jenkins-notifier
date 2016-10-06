@@ -106,6 +106,17 @@ var Services = (function () {
         delete Jobs.jobs[url];
         return Storage.set({jobs: Jobs.jobs});
       },
+      setUrls: function (urls) {
+        var newJobs = {};
+        urls.forEach(function (url) {
+          newJobs[url] = Jobs.jobs[url] || defaultJobData(url);
+        });
+        Jobs.jobs = newJobs;
+
+        return Storage.set({jobs: Jobs.jobs}).then(function () {
+          return Jobs.jobs;
+        });
+      },
       updateStatus: function (url) {
         return jenkins(url).then(function (data) {
           return Jobs.add(url, data);
@@ -171,7 +182,7 @@ var Services = (function () {
       }).then(function (data) {
         var job = jobMapping(data);
 
-        if(data.jobs) {
+        if (data.jobs) {
           return fetch(url + 'cc.xml', fetchOptions).then(function (res) {
             return res.ok ? res.text() : Promise.reject(res);
           }).then(function (text) {

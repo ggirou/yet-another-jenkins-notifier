@@ -19,17 +19,40 @@
 (function () {
   "use strict";
 
+  Services.init();
+
+  var Jobs = Services.Jobs;
+  var $rootScope = Services.$rootScope;
+
+  var urlsTextarea = document.querySelector('#urls');
+
+  $rootScope.$on('Jobs::jobs.initialized', function (event, jobs) {
+    showJobUrls(jobs);
+  });
+
   NodeList.prototype.forEach = Array.prototype.forEach;
 
   var refreshTimeInput = document.getElementById('refreshTime');
   var refreshTimeSpan = document.getElementById('refreshTimeSpan');
-  var refreshTimeFieldset = document.getElementById('refreshTimeFieldset');
-  var statusElement = document.getElementById('status');
+  var optionsStatusElement = document.getElementById('optionStatus');
+  var urlsStatusElement = document.getElementById('urlsStatus');
 
   var defaultOptions = {
     refreshTime: 60,
     notification: 'all'
   };
+
+  function showSavedNotification(statusElement) {
+    // Update status to let user know options were saved.
+    statusElement.style.visibility = "";
+    setTimeout(function () {
+      statusElement.style.visibility = "hidden";
+    }, 2000);
+  };
+
+  function showJobUrls(jobs) {
+    urlsTextarea.value = Object.keys(jobs).join("\n");
+  }
 
   // Saves options to chrome.storage.local.
   function saveOptions() {
@@ -37,23 +60,27 @@
       refreshTime: refreshTimeInput.value,
       notification: document.querySelector('[name=notification]:checked').value
     };
-    refreshTimeFieldset.disabled = options.notification === 'none';
     chrome.storage.local.set({options: options}, function () {
-      // Update status to let user know options were saved.
-      statusElement.style.visibility = "visible";
-      setTimeout(function () {
-        statusElement.style.visibility = "hidden";
-      }, 1000);
+      showSavedNotification(optionsStatusElement);
+    });
+  }
+
+  // Saves urls to chrome.storage.local.
+  function saveUrls() {
+    var value = urlsTextarea.value.trim();
+    var newUrls = value ? value.replace(/[\r\n]+/g, "\n").split("\n") : [];
+    Jobs.setUrls(newUrls).then(showJobUrls).then(function () {
+      showSavedNotification(urlsStatusElement);
     });
   }
 
   // Restores the preferences stored in chrome.storage.
   function restoreOptions() {
+    // TODO create and use OptionService
     chrome.storage.local.get({options: defaultOptions}, function (objects) {
       var options = objects.options;
       document.querySelector('[name=notification]:checked').checked = false;
       document.querySelector('[name=notification][value="' + options.notification + '"]').checked = true;
-      refreshTimeFieldset.disabled = options.notification === 'none';
       refreshTimeSpan.textContent = refreshTimeInput.value = options.refreshTime;
     });
   }
@@ -66,5 +93,6 @@
   document.querySelectorAll('input').forEach(function (element) {
     element.addEventListener('change', saveOptions);
   });
+  document.querySelector('#saveUrls').addEventListener('click', saveUrls);
   refreshTimeInput.addEventListener('input', updateRefreshTimeSpan);
 })();

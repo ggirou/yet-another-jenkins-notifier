@@ -7,37 +7,53 @@
     fieldset[disabled] {
       opacity: 0.75;
     }
+
+    textarea {
+      width: 100%;
+      min-height: 150px;
+    }
   </style>
 </head>
 
 <body>
+
 <fieldset>
-  <legend>Notifications</legend>
-  <i>Show popup notifications:</i>
-  <br><br>
-  <label>
-    <input type="radio" name="notification" value="all" checked>
-    On every build
-  </label>
-  <label>
-    <input type="radio" name="notification" value="unstable">
-    On every unstable build
-  </label>
-  <label>
-    <input type="radio" name="notification" value="none">
-    Never
-  </label>
+  <legend>Options</legend>
+  <p>
+    <b>Show popup notifications:</b>
+    <br>
+    <label>
+      <input type="radio" name="notification" value="all" checked>
+      On every build
+    </label>
+    <label>
+      <input type="radio" name="notification" value="unstable">
+      On every unstable build
+    </label>
+    <label>
+      <input type="radio" name="notification" value="none">
+      Never
+    </label>
+  </p>
+  <p>
+    <label><b>Refresh time:</b></label><br>
+    <input style="width: 100%;" min="5" max="120" step="5" range-type="s" type="range" id="refreshTime">
+    <br>
+    <i>Check server for changes every <b><span id="refreshTimeSpan"></span> seconds</b></i>
+  </p>
 </fieldset>
-<br>
-<fieldset id="refreshTimeFieldset">
-  <legend>Refresh time</legend>
-  <i>Check server for changes every <b><span id="refreshTimeSpan"></span> seconds</b>:</i>
-  <br><br>
-  <input style="width: 100%;" min="5" max="120" step="5" range-type="s" type="range" id="refreshTime">
+<p style="visibility: hidden" id="optionStatus">Options saved.</p>
+<fieldset>
+  <legend>Listening job build urls</legend>
+  <i>One url per line</i>
+  <br>
+  <textarea id="urls"></textarea>
+  <br>
+  <button id="saveUrls" type="submit">Save urls</button>
 </fieldset>
+<p style="visibility: hidden" id="urlsStatus">Urls saved.</p>
 
-<p style="visibility: hidden" id="status">Options saved.</p>
-
+<script src="js/services.js"></script>
 <script src="js/options.js"></script>
 <script src="js/ga.js" data-no-firefox></script>
 </body>
