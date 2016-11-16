@@ -34,7 +34,7 @@
             <h4>
               <span data-jobfield="name"><!--name--></span>
               <br>
-              <a data-jobfield="url" class="small" target="_blank"><!--url--></a>
+              <a class="small" target="_blank" data-joburl data-jobfield="url"><!--url--></a>
             </h4>
           </div>
         </div>
@@ -42,6 +42,10 @@
           <div class="pull-right">
             <button type="button" class="close" aria-label="Close"><span
               aria-hidden="true">&times;</span></button>
+            <a class="label label-danger" target="_blank" data-joburl data-joberror>
+              <span class="glyphicon glyphicon-exclamation-sign"></span>
+              Error
+            </a>
             <p data-jobfield="status" data-jobstatusclass class="badge"><!--status--></p>
           </div>
         </div>
@@ -56,7 +60,7 @@
     <li class="row">
       <div class="col-xs-offset-2 col-xs-8">
         <div class="job-title">
-          <a data-jobfield="name" target="_blank"><!--name--></a>
+          <a target="_blank" data-joburl data-jobfield="name"><!--name--></a>
         </div>
       </div>
       <div class="col-xs-2">
@@ -71,7 +75,7 @@
       <label class="input-group-addon" for="url">Url</label>
       <input type="url" class="form-control" id="url" name="url"
              autofocus tabindex="1" required>
-        <span class="input-group-btn">
+      <span class="input-group-btn">
           <button id="addButton" type="submit" class="btn btn-primary">
             <span class="glyphicon glyphicon-plus"></span>
           </button>

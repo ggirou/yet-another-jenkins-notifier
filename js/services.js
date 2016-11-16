@@ -37,6 +37,9 @@ var Services = (function () {
         }
       }
       return obj;
+    },
+    clone: function (obj) {
+      return JSON.parse(JSON.stringify(obj));
     }
   };
 
@@ -84,9 +87,13 @@ var Services = (function () {
       return {
         name: decodeURI(url.replace(jobNameRegExp, '$1')),
         url: decodeURI(url),
-        status: status,
         building: false,
-        lastBuild: {}
+        status: status || '',
+        statusClass: undefined,
+        statusIcon: undefined,
+        lastBuildNumber: undefined,
+        error: undefined,
+        jobs: undefined
       };
     }
   }
@@ -118,7 +125,12 @@ var Services = (function () {
         });
       },
       updateStatus: function (url) {
-        return jenkins(url).then(function (data) {
+        return jenkins(url).catch(function (res) {
+          // On error, keep existing data or create default one
+          var data = _.clone(Jobs.jobs[url]) || defaultJobData(url);
+          data.error = (res instanceof Error ? res.message : res.statusText) || 'Unreachable';
+          return data;
+        }).then(function (data) {
           return Jobs.add(url, data);
         });
       },
@@ -205,8 +217,6 @@ var Services = (function () {
         } else {
           return job;
         }
-      }).catch(function (res) {
-        return defaultJobData(url, res.status == 403 ? 'Forbidden' : 'Unreachable');
       });
     }
   }
@@ -238,7 +248,7 @@ var Services = (function () {
         return;
 
       // Ignore new job, not built yet
-      if(newValue.status === 'Not built') {
+      if (newValue.status === 'Not built') {
         return;
       }
 

@@ -124,8 +124,14 @@
         el.className = el.className.replace(/ alert-.*$/, '').replace(/ ?$/, ' alert-' + job.statusClass);
       });
 
-      var urlLink = node.querySelector('a');
-      urlLink.href = job.url;
+      _.forEach(node.querySelectorAll('[data-joberror]'), function (el) {
+        el.classList.toggle('hidden', !job.error);
+        el.setAttribute('title', 'Error: ' + job.error);
+      });
+
+      _.forEach(node.querySelectorAll('a[data-joburl]'), function (el) {
+        el.href = job.url;
+      });
     }
 
     function renderRepeat(container, template, obj, render) {
