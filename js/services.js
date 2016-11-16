@@ -202,13 +202,13 @@ var Services = (function () {
 
             _.forEach(projects, function (project) {
               var name = project.attributes['name'].value;
-              var url = project.attributes['webUrl'].value;
+              var url = decodeURI(project.attributes['webUrl'].value);
               var lastBuildNumber = project.attributes['lastBuildLabel'].value;
 
               var subJob = job.jobs[url];
               if (subJob && !subJob.lastBuildNumber) {
                 subJob.lastBuildNumber = lastBuildNumber;
-                subJob.url = decodeURI(url);
+                subJob.url = url;
               }
             });
 
