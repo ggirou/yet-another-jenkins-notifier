@@ -237,6 +237,11 @@ var Services = (function () {
       if (oldValue.lastBuildNumber == newValue.lastBuildNumber)
         return;
 
+      // Ignore new job, not built yet
+      if(newValue.status === 'Not built') {
+        return;
+      }
+
       var title = 'Build ' + newValue.status + '!';
       if ($rootScope.options.notification === 'unstable' && newValue.status === 'Success' && newValue.lastBuildNumber > 1) {
         if (oldValue.status === 'Success') {
