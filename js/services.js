@@ -155,19 +155,19 @@ var Services = (function () {
       credentials: 'include'
     };
 
-    function jobMapping(data) {
+    function jobMapping(url, data) {
       var basicColor = (data.color || '').replace(buildingRegExp, '');
       var lastBuild = data.lastCompletedBuild || {};
       return {
         name: data.displayName || data.name || data.nodeName || 'All jobs',
-        url: decodeURI(data.url),
+        url: decodeURI(data.url || url),
         building: buildingRegExp.test(data.color),
         status: status[basicColor] || basicColor,
         statusClass: colorToClass[basicColor] || '',
         statusIcon: colorToIcon[basicColor] || 'grey',
         lastBuildNumber: lastBuild.number || '',
         jobs: data.jobs && data.jobs.reduce(function (jobs, data) {
-          var job = jobMapping(data);
+          var job = jobMapping(null, data);
           jobs[job.url] = job;
           return jobs;
         }, {})
@@ -180,7 +180,7 @@ var Services = (function () {
       return fetch(url + 'api/json/', fetchOptions).then(function (res) {
         return res.ok ? res.json() : Promise.reject(res);
       }).then(function (data) {
-        var job = jobMapping(data);
+        var job = jobMapping(url, data);
 
         if (data.jobs) {
           return fetch(url + 'cc.xml', fetchOptions).then(function (res) {
