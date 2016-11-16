@@ -4,7 +4,7 @@
   "description": "This extension notifies you on Jenkins build results.",
   "author": "Guillaume Girou",
   "homepage_url": "https://github.com/ggirou/yet-another-jenkins-notifier",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "applications": {
     "gecko": {
       "id": "yet-another-jenkins-notifier@guillaume.girou",
