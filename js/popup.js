@@ -113,11 +113,49 @@
       renderRepeat(subJobs, jobSubItemTemplate, job.jobs, renderJob);
     }
 
+    // https://momentjs.com/docs/#/displaying/fromnow/
+    var DURATION_TIME = [
+      {short: "y", long: "year", breakdown: 320 * 24 * 60 * 60, divisor: 365 * 24 * 60 * 60},
+      {short: "mo.", long: "month", breakdown: 26 * 24 * 60 * 60, divisor: 30 * 24 * 60 * 60},
+      {short: "d", long: "day", breakdown: 22 * 60 * 60, divisor: 24 * 60 * 60},
+      {short: "h", long: "hour", breakdown: 45 * 60, divisor: 60 * 60},
+      {short: "m", long: "minute", breakdown: 45, divisor: 60},
+      {short: "s", long: "second", breakdown: 0, divisor: 1}
+    ];
+
+    function fromNow(date) {
+      if (!date) {
+        return {
+          short: "",
+          long: ""
+        };
+      }
+
+      var diff = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
+
+      for (var i = 0; i < DURATION_TIME.length; i++) {
+        var unit = DURATION_TIME[i];
+        if (diff >= unit.breakdown) {
+          var nb = Math.round(diff / unit.divisor);
+          return {
+            short: "" + nb + unit.short,
+            long: "" + nb + " " + unit.long + (nb >= 2 ? "s ago" : " ago")
+          };
+        }
+      }
+    }
+
     function renderJob(node, url, job) {
       node.classList.toggle('building', job.building);
 
       _.forEach(node.querySelectorAll('[data-jobfield]'), function (el) {
         el.innerText = job[el.dataset.jobfield];
+      });
+
+      _.forEach(node.querySelectorAll('[data-lastbuildtime]'), function (el) {
+        var texts = fromNow(job.lastBuildTime);
+        el.innerText = texts.short;
+        el.title = texts.long;
       });
 
       _.forEach(node.querySelectorAll('[data-jobstatusclass]'), function (el) {

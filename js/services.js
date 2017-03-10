@@ -178,6 +178,7 @@ var Services = (function () {
         statusClass: colorToClass[basicColor] || '',
         statusIcon: colorToIcon[basicColor] || 'grey',
         lastBuildNumber: lastBuild.number || '',
+        lastBuildTime: '',
         jobs: data.jobs && data.jobs.reduce(function (jobs, data) {
           var job = jobMapping(null, data);
           jobs[subJobKey(job.url)] = job;
@@ -208,11 +209,13 @@ var Services = (function () {
               var url = decodeURI(project.attributes['webUrl'].value);
               var name = subJobKey(url);
               var lastBuildNumber = project.attributes['lastBuildLabel'].value;
+              var lastBuildTime = new Date(project.attributes['lastBuildTime'].value).toISOString();
 
               var subJob = job.jobs[name];
               if (subJob && !subJob.lastBuildNumber) {
                 subJob.name = name;
                 subJob.lastBuildNumber = lastBuildNumber;
+                subJob.lastBuildTime = lastBuildTime;
               }
             });
 
