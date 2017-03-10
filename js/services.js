@@ -180,10 +180,14 @@ var Services = (function () {
         lastBuildNumber: lastBuild.number || '',
         jobs: data.jobs && data.jobs.reduce(function (jobs, data) {
           var job = jobMapping(null, data);
-          jobs[job.url] = job;
+          jobs[subJobKey(job.url)] = job;
           return jobs;
         }, {})
       };
+    }
+
+    function subJobKey(url) {
+      return url.replace(/^.+?\/job\/(.+)\/$/, "$1").replace(/\/job\//g, "/");
     }
 
     return function (url) {
@@ -201,14 +205,12 @@ var Services = (function () {
             var projects = xmlParser.parseFromString(text, 'text/xml').getElementsByTagName('Project');
 
             _.forEach(projects, function (project) {
-              var name = project.attributes['name'].value;
               var url = decodeURI(project.attributes['webUrl'].value);
               var lastBuildNumber = project.attributes['lastBuildLabel'].value;
 
-              var subJob = job.jobs[url];
+              var subJob = job.jobs[name];
               if (subJob && !subJob.lastBuildNumber) {
                 subJob.lastBuildNumber = lastBuildNumber;
-                subJob.url = url;
               }
             });
 
