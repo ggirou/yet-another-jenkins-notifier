@@ -206,10 +206,12 @@ var Services = (function () {
 
             _.forEach(projects, function (project) {
               var url = decodeURI(project.attributes['webUrl'].value);
+              var name = subJobKey(url);
               var lastBuildNumber = project.attributes['lastBuildLabel'].value;
 
               var subJob = job.jobs[name];
               if (subJob && !subJob.lastBuildNumber) {
+                subJob.name = name;
                 subJob.lastBuildNumber = lastBuildNumber;
               }
             });
