@@ -127,11 +127,13 @@
       if (!date) {
         return {
           short: "",
-          long: ""
+          long: "",
+          fullDate: ""
         };
       }
 
-      var diff = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
+      date = new Date(date);
+      var diff = Math.floor((new Date().getTime() - date.getTime()) / 1000);
 
       for (var i = 0; i < DURATION_TIME.length; i++) {
         var unit = DURATION_TIME[i];
@@ -139,7 +141,8 @@
           var nb = Math.round(diff / unit.divisor);
           return {
             short: "" + nb + unit.short,
-            long: "" + nb + " " + unit.long + (nb >= 2 ? "s ago" : " ago")
+            long: "" + nb + " " + unit.long + (nb >= 2 ? "s ago" : " ago"),
+            fullDate: date.toLocaleString()
           };
         }
       }
@@ -155,7 +158,7 @@
       _.forEach(node.querySelectorAll('[data-lastbuildtime]'), function (el) {
         var texts = fromNow(job.lastBuildTime);
         el.innerText = texts.short;
-        el.title = texts.long;
+        el.title = texts.fullDate;
       });
 
       _.forEach(node.querySelectorAll('[data-jobstatusclass]'), function (el) {
