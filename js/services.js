@@ -86,7 +86,7 @@ var Services = (function () {
       var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
       return {
         name: decodeURI(url.replace(jobNameRegExp, '$1')),
-        url: decodeURI(url),
+        url,
         building: false,
         status: status || '',
         statusClass: undefined,
@@ -172,7 +172,7 @@ var Services = (function () {
       var lastBuild = data.lastCompletedBuild || {};
       return {
         name: data.displayName || data.name || data.nodeName || 'All jobs',
-        url: decodeURI(data.url || url),
+        url: data.url || url,
         building: buildingRegExp.test(data.color),
         status: status[basicColor] || basicColor,
         statusClass: colorToClass[basicColor] || '',
