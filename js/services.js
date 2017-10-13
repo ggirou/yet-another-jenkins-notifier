@@ -86,7 +86,7 @@ var Services = (function () {
       var jobNameRegExp = /.*\/job\/([^/]+)(\/.*|$)/;
       return {
         name: decodeURI(url.replace(jobNameRegExp, '$1')),
-        url: url,
+        url,
         building: false,
         status: status || '',
         statusClass: undefined,
