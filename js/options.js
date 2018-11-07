@@ -39,7 +39,8 @@
 
   var defaultOptions = {
     refreshTime: 60,
-    notification: 'all'
+    notification: 'all',
+    hiddenStatusList: [],
   };
 
   function showSavedNotification(statusElement) {
@@ -52,14 +53,34 @@
 
   function showJobUrls(jobs) {
     urlsTextarea.value = Object.keys(jobs).join("\n");
-  }
+  };
 
   // Saves options to chrome.storage.local.
   function saveOptions() {
     var options = {
       refreshTime: refreshTimeInput.value,
-      notification: document.querySelector('[name=notification]:checked').value
+      notification: document.querySelector('[name=notification]:checked').value,
+      hiddenStatusList: []
     };
+    if (!document.querySelector('[name=show_success]').checked){
+        options.hiddenStatusList.push(document.querySelector('[name=show_success]').value);
+    };
+    if (!document.querySelector('[name=show_unstable]').checked){
+        options.hiddenStatusList.push(document.querySelector('[name=show_unstable]').value);
+    };
+    if (!document.querySelector('[name=show_failure]').checked){
+        options.hiddenStatusList.push(document.querySelector('[name=show_failure]').value);
+    };
+    if (!document.querySelector('[name=show_not_built]').checked){
+        options.hiddenStatusList.push(document.querySelector('[name=show_not_built]').value);
+    };
+    if (!document.querySelector('[name=show_aborted]').checked){
+        options.hiddenStatusList.push(document.querySelector('[name=show_aborted]').value);
+    };
+    if (!document.querySelector('[name=show_disabled]').checked){
+        options.hiddenStatusList.push(document.querySelector('[name=show_disabled]').value);
+    };
+
     chrome.storage.local.set({options: options}, function () {
       showSavedNotification(optionsStatusElement);
     });
@@ -82,6 +103,36 @@
       document.querySelector('[name=notification]:checked').checked = false;
       document.querySelector('[name=notification][value="' + options.notification + '"]').checked = true;
       refreshTimeSpan.textContent = refreshTimeInput.value = options.refreshTime;
+
+      document.querySelector('[name=show_success]').checked = false;
+      if (options.hiddenStatusList.indexOf('Success') == -1){
+        document.querySelector('[name=show_success]').checked = true;
+      };
+
+      document.querySelector('[name=show_unstable]').checked = false;
+      if (options.hiddenStatusList.indexOf('Unstable') == -1){
+        document.querySelector('[name=show_unstable]').checked = true;
+      };
+
+      document.querySelector('[name=show_failure]').checked = false;
+      if (options.hiddenStatusList.indexOf('Failure') == -1){
+        document.querySelector('[name=show_failure]').checked = true;
+      };
+
+      document.querySelector('[name=show_not_built]').checked = false;
+      if (options.hiddenStatusList.indexOf('Not built') == -1){
+        document.querySelector('[name=show_not_built]').checked = true;
+      };
+
+      document.querySelector('[name=show_aborted]').checked = false;
+      if (options.hiddenStatusList.indexOf('Aborted') == -1){
+        document.querySelector('[name=show_aborted]').checked = true;
+      };
+
+      document.querySelector('[name=show_disabled]').checked = false;
+      if (options.hiddenStatusList.indexOf('Disabled') == -1){
+        document.querySelector('[name=show_disabled]').checked = true;
+      };
     });
   }
 
