@@ -2,9 +2,9 @@
   "manifest_version": 2,
   "name": "Yet Another Jenkins Notifier",
   "description": "This extension notifies you on Jenkins build results.",
-  "author": "Guillaume Girou",
+  "author": "Guillaume Girou, Christian Simmen",
   "homepage_url": "https://github.com/ggirou/yet-another-jenkins-notifier",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "applications": {
     "gecko": {
       "id": "yet-another-jenkins-notifier@guillaume.girou",
