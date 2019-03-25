@@ -42,6 +42,43 @@
     <i>Check server for changes every <b><span id="refreshTimeSpan"></span> seconds</b></i>
   </p>
 </fieldset>
+<p></p>
+<fieldset>
+  <legend>Job filter options</legend>
+  <p>
+    <b>Show jobs in state:</b>
+    <br>
+    <label>
+      <input type="checkbox" name="show_success" value="Success" checked>
+      Success
+    </label>
+    <br>
+    <label>
+      <input type="checkbox" name="show_unstable" value="Unstable" checked>
+      Unstable
+    </label>
+    <br>
+    <label>
+      <input type="checkbox" name="show_failure" value="Failure" checked>
+      Failure
+    </label>
+    <br>
+    <label>
+      <input type="checkbox" name="show_not_built" value="Not built" checked>
+      Not built
+    </label>
+    <br>
+    <label>
+      <input type="checkbox" name="show_aborted" value="Aborted" checked>
+      Aborted
+    </label>
+    <br>
+    <label>
+      <input type="checkbox" name="show_disabled" value="Disabled" checked>
+      Disabled
+    </label>
+  </p>
+</fieldset>
 <p style="visibility: hidden" id="optionStatus">Options saved.</p>
 <fieldset>
   <legend>Listening job build urls</legend>

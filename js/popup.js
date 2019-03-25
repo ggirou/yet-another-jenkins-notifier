@@ -151,6 +151,8 @@
     function renderJob(node, url, job) {
       node.classList.toggle('building', job.building);
 
+      node.classList.toggle('hidden', $rootScope.options.hiddenStatusList.indexOf(job.status) > -1 && !(job.building));
+
       _.forEach(node.querySelectorAll('[data-jobfield]'), function (el) {
         el.innerText = job[el.dataset.jobfield];
       });
