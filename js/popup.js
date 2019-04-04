@@ -37,11 +37,13 @@
     var urlForm = document.getElementById('urlForm');
     var urlInput = document.getElementById('url');
     var addButton = document.getElementById('addButton');
+    var linkGeneratorButton = document.getElementById('linkGeneratorButton');
     var errorMessage = document.getElementById('errorMessage');
 
     optionsLink.addEventListener('click', openOptionsPage);
     urlForm.addEventListener('submit', addUrl);
     urlForm.addEventListener('input', validateForm);
+    linkGeneratorButton.addEventListener('click', addUrlGeneratedFromDom);
 
     validateForm();
     placeholderRotate();
@@ -54,6 +56,12 @@
       }
     }
 
+    function fetchOptionsGenerateUrlRule(callback) {
+      chrome.storage.local.get({options: {generateUrlRule: ''}}, function(objects){
+        callback(objects.options.generateUrlRule)
+      });
+    }
+
     function addUrl(event) {
       event.preventDefault();
 
@@ -62,6 +70,27 @@
         urlInput.value = '';
       }).then(function () {
         return Jobs.updateStatus(url);
+      });
+    }
+
+    function addUrlGeneratedFromDom() {
+      fetchOptionsGenerateUrlRule(function (generateUrlRule) {
+        function modifyDOM() {
+          return document.body.innerHTML;
+        }
+
+        chrome.tabs.executeScript({
+          code: '(' + modifyDOM + ')();'
+        }, (results) => {
+          var dom = results[0];
+          var url = urlGenerator(generateUrlRule, dom);
+
+          Jobs.add(url).then(function () {
+            urlInput.value = '';
+          }).then(function () {
+            return Jobs.updateStatus(url);
+          });
+        });
       });
     }
 
@@ -185,6 +214,26 @@
         container.children[j].remove();
       }
     }
+
+    function branchName(dom) {
+      var regex = /href=".+\/tree\/(.+?)">/;
+      var matching = dom.match(regex);
+      if(matching === null) { return '' }
+      return matching[1];
+    }
+
+    function repoName(dom) {
+      var regex = /href="\/.+\/(.+?)\/tree\/.+?">/;
+      var matching = dom.match(regex);
+      if(matching === null) { return '' }
+      return matching[1];
+    }
+
+    function urlGenerator(rule, dom) {
+      var url = rule.replace('{{branchName}}', branchName(dom));
+      url = url.replace('{{repoName}}', repoName(dom));
+      return url
+    };
   }
 
   document.addEventListener('DOMContentLoaded', documentReady);
