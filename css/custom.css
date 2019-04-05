@@ -77,3 +77,7 @@ body {
         opacity: 0.5;
     }
 }
+
+.input-group {
+  width: 100%;
+}

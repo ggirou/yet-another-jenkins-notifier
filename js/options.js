@@ -36,10 +36,12 @@
   var refreshTimeSpan = document.getElementById('refreshTimeSpan');
   var optionsStatusElement = document.getElementById('optionStatus');
   var urlsStatusElement = document.getElementById('urlsStatus');
+  var generateUrlRule = document.getElementById('generateUrlRule');
 
   var defaultOptions = {
     refreshTime: 60,
-    notification: 'all'
+    notification: 'all',
+    generateUrlRule: ''
   };
 
   function showSavedNotification(statusElement) {
@@ -58,7 +60,8 @@
   function saveOptions() {
     var options = {
       refreshTime: refreshTimeInput.value,
-      notification: document.querySelector('[name=notification]:checked').value
+      notification: document.querySelector('[name=notification]:checked').value,
+      generateUrlRule: generateUrlRule.value
     };
     chrome.storage.local.set({options: options}, function () {
       showSavedNotification(optionsStatusElement);
@@ -82,6 +85,7 @@
       document.querySelector('[name=notification]:checked').checked = false;
       document.querySelector('[name=notification][value="' + options.notification + '"]').checked = true;
       refreshTimeSpan.textContent = refreshTimeInput.value = options.refreshTime;
+      generateUrlRule.value = options.generateUrlRule;
     });
   }
 

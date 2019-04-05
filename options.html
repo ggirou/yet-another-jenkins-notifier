@@ -52,6 +52,18 @@
   <button id="saveUrls" type="submit">Save urls</button>
 </fieldset>
 <p style="visibility: hidden" id="urlsStatus">Urls saved.</p>
+<fieldset>
+  <legend>Genrerate url with macro from the current tab</legend>
+  <p>Availible macros</p>
+  <ul>
+    <li><em>branchName</em> (Github PR)</li>
+    <li><em>repoName</em> (Github PR)</li>
+  </ul>
+  <input style="width: 100%" id="generateUrlRule"/>
+  <p>
+    Example: <em>https://jenkins.example.com/{{repoName}}/job/{{branchName}}</em>
+  </p>
+</fieldset>
 
 <script src="js/services.js"></script>
 <script src="js/options.js"></script>
