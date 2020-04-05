@@ -180,7 +180,7 @@ var Services = (function () {
         lastBuildNumber: lastBuild.number || '',
         lastBuildTime: '',
         jobs: data.jobs && data.jobs.reduce(function (jobs, data) {
-          var job = jobMapping(null, data);
+          var job = jobMapping(data.url, data);
           jobs[subJobKey(job.url)] = job;
           return jobs;
         }, {})
@@ -194,12 +194,17 @@ var Services = (function () {
     return function (url) {
       url = url.charAt(url.length - 1) === '/' ? url : url + '/';
 
-      return fetch(url + 'api/json/', fetchOptions).then(function (res) {
+      let basicList = 'displayName,name,nodeName,url,color,lastCompletedBuild[number]';
+      let deepList = basicList;
+      for (let depth = 3; depth > 0; depth--) {
+        deepList = basicList + ',jobs[' + deepList + ']';
+      }
+      return fetch(url + 'api/json?tree=' + encodeURIComponent(deepList), fetchOptions).then(function (res) {
         return res.ok ? res.json() : Promise.reject(res);
       }).then(function (data) {
         var job = jobMapping(url, data);
 
-        if (data.jobs) {
+        if (false && data.jobs) {
           return fetch(url + 'cc.xml', fetchOptions).then(function (res) {
             return res.ok ? res.text() : Promise.reject(res);
           }).then(function (text) {
